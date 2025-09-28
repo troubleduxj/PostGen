@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Group,
-  Ungroup,
   Copy,
   Trash2,
   AlignLeft,
@@ -11,9 +10,7 @@ import {
   ArrowUp,
   Minus,
   ArrowDown,
-  Layers,
-  Move,
-  RotateCw
+  Layers
 } from 'lucide-react';
 import { fabric } from 'fabric';
 import { useEditorStore } from '@/stores/editorStore';
@@ -29,20 +26,62 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
   onClose
 }) => {
   const { canvas } = useEditorStore();
-  const { groupLayers, ungroupLayer, layers } = useLayerManagerStore();
+  const { groupLayers, layers } = useLayerManagerStore();
   const [position, setPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     if (canvas && selectedObjects.length > 0) {
-      // 计算选中对象的边界框
-      const group = new fabric.Group(selectedObjects);
-      const bounds = group.getBoundingRect();
-      
-      // 设置工具栏位置在选中区域上方
-      setPosition({
-        x: bounds.left + bounds.width / 2,
-        y: bounds.top - 50
-      });
+      try {
+        // 获取当前的活动选择对象
+        const activeSelection = canvas.getActiveObject();
+        if (activeSelection && activeSelection.type === 'activeSelection') {
+          const bounds = activeSelection.getBoundingRect();
+          
+          // 获取画布元素和容器的位置信息
+          const canvasElement = canvas.getElement();
+          const canvasRect = canvasElement.getBoundingClientRect();
+          
+          // 计算画布的缩放和偏移
+          const zoom = canvas.getZoom();
+          const vpt = canvas.viewportTransform;
+          const canvasLeft = vpt ? vpt[4] : 0;
+          const canvasTop = vpt ? vpt[5] : 0;
+          
+          // 计算选中区域在屏幕上的实际位置
+          const screenX = canvasRect.left + (bounds.left + canvasLeft) * zoom;
+          const screenY = canvasRect.top + (bounds.top + canvasTop) * zoom;
+          const screenWidth = bounds.width * zoom;
+          
+          // 工具栏高度约为50px，确保在选中区域上方显示
+          const toolbarHeight = 50;
+          let toolbarY = screenY - toolbarHeight - 10;
+          
+          // 如果工具栏会超出屏幕顶部，则显示在选中区域下方
+          if (toolbarY < 10) {
+            toolbarY = screenY + bounds.height * zoom + 10;
+          }
+          
+          // 确保工具栏在屏幕范围内
+          const toolbarX = Math.max(150, Math.min(window.innerWidth - 150, screenX + screenWidth / 2));
+          
+          setPosition({
+            x: toolbarX,
+            y: Math.max(10, Math.min(window.innerHeight - toolbarHeight - 10, toolbarY))
+          });
+        } else {
+          // 如果没有活动选择，使用画布中心
+          const canvasElement = canvas.getElement();
+          const canvasRect = canvasElement.getBoundingClientRect();
+          setPosition({
+            x: canvasRect.left + canvasRect.width / 2,
+            y: canvasRect.top + 100
+          });
+        }
+      } catch (error) {
+        console.warn('Error calculating toolbar position:', error);
+        // 使用默认位置
+        setPosition({ x: 200, y: 100 });
+      }
     }
   }, [selectedObjects, canvas]);
 
@@ -53,7 +92,7 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
         const layer = layers.find(l => l.fabricObject === obj);
         return layer?.id;
       }).filter(Boolean) as string[];
-      
+
       if (selectedLayerIds.length >= 2) {
         groupLayers(selectedLayerIds, '组合');
         onClose();
@@ -90,48 +129,52 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
   const handleAlign = (type: string) => {
     if (!canvas || selectedObjects.length < 2) return;
 
-    const canvasWidth = canvas.getWidth();
-    const canvasHeight = canvas.getHeight();
-    
     // 计算选中对象的边界
     let minLeft = Infinity, maxRight = -Infinity;
     let minTop = Infinity, maxBottom = -Infinity;
-    
+
+    // 首先计算所有对象的边界
     selectedObjects.forEach(obj => {
-      const bounds = obj.getBoundingRect();
-      minLeft = Math.min(minLeft, bounds.left);
-      maxRight = Math.max(maxRight, bounds.left + bounds.width);
-      minTop = Math.min(minTop, bounds.top);
-      maxBottom = Math.max(maxBottom, bounds.top + bounds.height);
+      const objLeft = obj.left || 0;
+      const objTop = obj.top || 0;
+      const objWidth = (obj.width || 0) * (obj.scaleX || 1);
+      const objHeight = (obj.height || 0) * (obj.scaleY || 1);
+
+      minLeft = Math.min(minLeft, objLeft);
+      maxRight = Math.max(maxRight, objLeft + objWidth);
+      minTop = Math.min(minTop, objTop);
+      maxBottom = Math.max(maxBottom, objTop + objHeight);
     });
 
+    // 对每个对象进行对齐
     selectedObjects.forEach(obj => {
-      const bounds = obj.getBoundingRect();
-      
+      const objWidth = (obj.width || 0) * (obj.scaleX || 1);
+      const objHeight = (obj.height || 0) * (obj.scaleY || 1);
+
       switch (type) {
         case 'left':
           obj.set({ left: minLeft });
           break;
         case 'center':
-          obj.set({ left: (minLeft + maxRight) / 2 - bounds.width / 2 });
+          obj.set({ left: (minLeft + maxRight) / 2 - objWidth / 2 });
           break;
         case 'right':
-          obj.set({ left: maxRight - bounds.width });
+          obj.set({ left: maxRight - objWidth });
           break;
         case 'top':
           obj.set({ top: minTop });
           break;
         case 'middle':
-          obj.set({ top: (minTop + maxBottom) / 2 - bounds.height / 2 });
+          obj.set({ top: (minTop + maxBottom) / 2 - objHeight / 2 });
           break;
         case 'bottom':
-          obj.set({ top: maxBottom - bounds.height });
+          obj.set({ top: maxBottom - objHeight });
           break;
       }
-      
+
       obj.setCoords();
     });
-    
+
     canvas.renderAll();
   };
 
@@ -139,47 +182,59 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
   const handleDistribute = (direction: 'horizontal' | 'vertical') => {
     if (selectedObjects.length < 3) return;
 
+    // 按位置排序对象
     const sorted = [...selectedObjects].sort((a, b) => {
-      const boundsA = a.getBoundingRect();
-      const boundsB = b.getBoundingRect();
-      
       if (direction === 'horizontal') {
-        return boundsA.left - boundsB.left;
+        return (a.left || 0) - (b.left || 0);
       } else {
-        return boundsA.top - boundsB.top;
+        return (a.top || 0) - (b.top || 0);
       }
     });
 
-    const first = sorted[0].getBoundingRect();
-    const last = sorted[sorted.length - 1].getBoundingRect();
-    
-    const totalSpace = direction === 'horizontal' 
-      ? (last.left + last.width) - first.left
-      : (last.top + last.height) - first.top;
-    
+    // 计算第一个和最后一个对象的位置
+    const firstObj = sorted[0];
+    const lastObj = sorted[sorted.length - 1];
+
+    const firstPos = direction === 'horizontal' ? (firstObj.left || 0) : (firstObj.top || 0);
+    const lastPos = direction === 'horizontal' ? (lastObj.left || 0) : (lastObj.top || 0);
+    const lastSize = direction === 'horizontal' 
+      ? ((lastObj.width || 0) * (lastObj.scaleX || 1))
+      : ((lastObj.height || 0) * (lastObj.scaleY || 1));
+
+    const totalSpace = (lastPos + lastSize) - firstPos;
+
+    // 计算所有对象的总尺寸
     const objectsSpace = sorted.reduce((sum, obj) => {
-      const bounds = obj.getBoundingRect();
-      return sum + (direction === 'horizontal' ? bounds.width : bounds.height);
+      const size = direction === 'horizontal' 
+        ? ((obj.width || 0) * (obj.scaleX || 1))
+        : ((obj.height || 0) * (obj.scaleY || 1));
+      return sum + size;
     }, 0);
-    
+
+    // 计算间隔
     const gap = (totalSpace - objectsSpace) / (sorted.length - 1);
-    
-    let currentPos = direction === 'horizontal' ? first.left : first.top;
-    
+
+    // 分布对象
+    let currentPos = firstPos;
+
     sorted.forEach((obj, index) => {
       if (index === 0) return; // 跳过第一个对象
-      
+
+      const objSize = direction === 'horizontal' 
+        ? ((obj.width || 0) * (obj.scaleX || 1))
+        : ((obj.height || 0) * (obj.scaleY || 1));
+
       if (direction === 'horizontal') {
         obj.set({ left: currentPos });
-        currentPos += obj.getBoundingRect().width + gap;
+        currentPos += objSize + gap;
       } else {
         obj.set({ top: currentPos });
-        currentPos += obj.getBoundingRect().height + gap;
+        currentPos += objSize + gap;
       }
-      
+
       obj.setCoords();
     });
-    
+
     canvas?.renderAll();
   };
 
@@ -187,11 +242,12 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
 
   return (
     <div
-      className="fixed bg-white rounded-lg shadow-lg border border-gray-200 p-2 flex items-center gap-1 z-50"
+      className="fixed bg-white rounded-lg shadow-xl border border-gray-200 p-2 flex items-center gap-1 z-50 backdrop-blur-sm"
       style={{
-        left: position.x - 150, // 居中显示
-        top: Math.max(10, position.y), // 确保不超出顶部
-        transform: 'translateX(-50%)'
+        left: position.x,
+        top: position.y,
+        transform: 'translateX(-50%)',
+        minWidth: '300px'
       }}
     >
       {/* 组合按钮 */}
@@ -214,7 +270,7 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
       >
         <AlignLeft size={16} />
       </button>
-      
+
       <button
         onClick={() => handleAlign('center')}
         className="flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 transition-colors"
@@ -222,7 +278,7 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
       >
         <AlignCenter size={16} />
       </button>
-      
+
       <button
         onClick={() => handleAlign('right')}
         className="flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 transition-colors"
@@ -240,7 +296,7 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
       >
         <ArrowUp size={16} />
       </button>
-      
+
       <button
         onClick={() => handleAlign('middle')}
         className="flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 transition-colors"
@@ -248,7 +304,7 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
       >
         <Minus size={16} />
       </button>
-      
+
       <button
         onClick={() => handleAlign('bottom')}
         className="flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 transition-colors"
@@ -263,16 +319,24 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
       {/* 分布按钮 */}
       <button
         onClick={() => handleDistribute('horizontal')}
-        className="flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 transition-colors"
+        className={`flex items-center justify-center w-8 h-8 rounded transition-colors ${
+          selectedObjects.length < 3 
+            ? 'text-gray-400 cursor-not-allowed' 
+            : 'hover:bg-gray-100'
+        }`}
         title="水平分布"
         disabled={selectedObjects.length < 3}
       >
         <AlignJustify size={16} />
       </button>
-      
+
       <button
         onClick={() => handleDistribute('vertical')}
-        className="flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 transition-colors"
+        className={`flex items-center justify-center w-8 h-8 rounded transition-colors ${
+          selectedObjects.length < 3 
+            ? 'text-gray-400 cursor-not-allowed' 
+            : 'hover:bg-gray-100'
+        }`}
         title="垂直分布"
         disabled={selectedObjects.length < 3}
       >

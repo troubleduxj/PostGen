@@ -45,10 +45,19 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
     console.log('Canvas created and set to store');
 
     // 设置现代化的选择样式
-    fabricCanvas.selectionColor = 'rgba(24, 144, 255, 0.08)';
+    fabricCanvas.selectionColor = 'rgba(24, 144, 255, 0.2)'; // 更明显的选择框背景
     fabricCanvas.selectionBorderColor = '#1890ff';
     fabricCanvas.selectionLineWidth = 2;
-    fabricCanvas.selectionDashArray = [5, 5];
+    fabricCanvas.selectionDashArray = []; // 使用实线而不是虚线，更清晰
+    
+    // 确保选择框可见和功能正常
+    fabricCanvas.selectionFullyContained = false; // 允许部分选择
+    fabricCanvas.skipTargetFind = false; // 允许查找目标对象
+    
+    // 设置选择框的样式，确保在多选时可见
+    fabricCanvas.on('before:selection:cleared', () => {
+      console.log('Selection about to be cleared');
+    });
     
     // 启用多选功能
     fabricCanvas.selection = true;
@@ -507,51 +516,27 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
         />
       </div>
       
-      {/* 多选工具栏 */}
-      {showMultiSelectToolbar && selectedObjects.length > 1 && (
+      {/* 统一的多选工具栏 - 只在多选时显示 */}
+      {selectedObjects.length > 1 && (
         <MultiSelectToolbar
           selectedObjects={selectedObjects}
-          onClose={() => setShowMultiSelectToolbar(false)}
+          onClose={() => {
+            // 清除选择
+            fabricCanvasRef.current?.discardActiveObject();
+            fabricCanvasRef.current?.renderAll();
+          }}
         />
       )}
       
-      {/* 选择指示器 */}
-      <SelectionIndicator
-        selectedCount={selectedObjects.length}
-        hasGroup={hasGroupInSelection}
-      />
+      {/* 选择指示器 - 只在单选时显示 */}
+      {selectedObjects.length === 1 && (
+        <SelectionIndicator
+          selectedCount={selectedObjects.length}
+          hasGroup={hasGroupInSelection}
+        />
+      )}
       
-      {/* 调试按钮 - 测试多选功能 */}
-      <div className="fixed top-4 right-4 z-50">
-        <button
-          onClick={() => {
-            const canvas = fabricCanvasRef.current;
-            if (canvas) {
-              const objects = canvas.getObjects();
-              console.log('Debug: Canvas objects:', objects.length);
-              console.log('Debug: Selection enabled:', canvas.selection);
-              console.log('Debug: Drawing mode:', canvas.isDrawingMode);
-              
-              // 强制启用多选
-              canvas.selection = true;
-              canvas.isDrawingMode = false;
-              
-              // 尝试选择所有对象
-              if (objects.length > 1) {
-                const selection = new fabric.ActiveSelection(objects, {
-                  canvas: canvas,
-                });
-                canvas.setActiveObject(selection);
-                canvas.renderAll();
-                console.log('Debug: Created multi-selection with', objects.length, 'objects');
-              }
-            }
-          }}
-          className="px-3 py-1 bg-blue-600 text-white text-xs rounded shadow"
-        >
-          测试多选
-        </button>
-      </div>
+
     </div>
   );
 };

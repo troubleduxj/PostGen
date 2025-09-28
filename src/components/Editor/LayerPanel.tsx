@@ -118,7 +118,8 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({ className = '' }) => {
             .map(obj => obj.get('layerId'))
             .filter(Boolean);
           if (layerIds.length > 0) {
-            selectLayer(layerIds[0], layerIds.length > 1);
+            // 只同步图层选择状态，不干扰Canvas的多选逻辑
+            selectLayer(layerIds[0], false); // 不触发多选模式
           }
         }
       };
@@ -129,7 +130,8 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({ className = '' }) => {
             .map(obj => obj.get('layerId'))
             .filter(Boolean);
           if (layerIds.length > 0) {
-            selectLayer(layerIds[0], layerIds.length > 1);
+            // 只同步图层选择状态，不干扰Canvas的多选逻辑
+            selectLayer(layerIds[0], false); // 不触发多选模式
           }
         }
       };
@@ -138,18 +140,21 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({ className = '' }) => {
         clearSelection();
       };
 
+      // 只监听对象添加和删除，不干扰选择事件
       canvas.on('object:added', handleObjectAdded);
       canvas.on('object:removed', handleObjectRemoved);
-      canvas.on('selection:created', handleSelectionCreated);
-      canvas.on('selection:updated', handleSelectionUpdated);
-      canvas.on('selection:cleared', handleSelectionCleared);
+      
+      // 注释掉选择事件监听器，避免与Canvas组件冲突
+      // canvas.on('selection:created', handleSelectionCreated);
+      // canvas.on('selection:updated', handleSelectionUpdated);
+      // canvas.on('selection:cleared', handleSelectionCleared);
 
       return () => {
         canvas.off('object:added', handleObjectAdded);
         canvas.off('object:removed', handleObjectRemoved);
-        canvas.off('selection:created', handleSelectionCreated);
-        canvas.off('selection:updated', handleSelectionUpdated);
-        canvas.off('selection:cleared', handleSelectionCleared);
+        // canvas.off('selection:created', handleSelectionCreated);
+        // canvas.off('selection:updated', handleSelectionUpdated);
+        // canvas.off('selection:cleared', handleSelectionCleared);
       };
     }
   }, [canvas, addLayer, selectLayer, clearSelection, syncWithCanvas]);
