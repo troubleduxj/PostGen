@@ -1,0 +1,1244 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 全局样式重置 */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: #f8fafc;
+    color: #1f2937;
+    overflow: hidden;
+    /* 防止编辑器页面滚动 */
+  }
+
+  #root {
+    width: 100vw;
+    height: 100vh;
+  }
+}
+
+/* 自定义组件样式 */
+@layer components {
+
+  /* 工具栏按钮 */
+  .toolbar-btn {
+    @apply flex items-center justify-center w-10 h-10 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 cursor-pointer;
+  }
+
+  .toolbar-btn.active {
+    @apply bg-primary-50 border-primary-200 text-primary-600;
+  }
+
+  /* 面板容器 */
+  .panel {
+    @apply bg-white border-r border-gray-200 flex flex-col;
+  }
+
+  .panel-header {
+    @apply px-4 py-3 border-b border-gray-200 font-medium text-gray-900;
+  }
+
+  .panel-content {
+    @apply flex-1 overflow-y-auto;
+  }
+
+  /* 海报工作区 */
+  .poster-workspace {
+    @apply flex-1 relative overflow-hidden;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background-image:
+      radial-gradient(circle at 25px 25px, rgba(255, 255, 255, 0.2) 2px, transparent 0),
+      radial-gradient(circle at 75px 75px, rgba(255, 255, 255, 0.1) 1px, transparent 0);
+    background-size: 100px 100px;
+  }
+
+  /* 标尺样式 */
+  .ruler {
+    @apply absolute bg-white border-gray-300 z-20;
+    font-size: 10px;
+    color: #666;
+  }
+
+  .ruler-horizontal {
+    @apply top-0 left-5 right-0 h-5 border-b;
+  }
+
+  .ruler-vertical {
+    @apply left-0 top-5 bottom-0 w-5 border-r;
+    writing-mode: vertical-lr;
+  }
+
+  .ruler-corner {
+    @apply absolute top-0 left-0 w-5 h-5 bg-white border-r border-b border-gray-300 z-30;
+  }
+
+  .ruler-content {
+    @apply relative w-full h-full;
+  }
+
+  .ruler-mark {
+    @apply absolute;
+  }
+
+  .ruler-horizontal .ruler-mark {
+    @apply h-full border-l border-gray-300;
+  }
+
+  .ruler-vertical .ruler-mark {
+    @apply w-full border-t border-gray-300;
+  }
+
+  .ruler-number {
+    @apply absolute text-xs text-gray-500;
+  }
+
+  .ruler-horizontal .ruler-number {
+    @apply left-1 top-0.5;
+  }
+
+  .ruler-vertical .ruler-number {
+    @apply top-1 left-0.5;
+    transform: rotate(-90deg);
+    transform-origin: center;
+  }
+
+
+
+  /* 画布阴影 */
+  .canvas-shadow {
+    @apply absolute bg-black opacity-20 rounded-lg;
+    filter: blur(8px);
+  }
+
+  /* 画布容器 */
+  .canvas-wrapper {
+    @apply bg-white rounded-lg overflow-hidden;
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06),
+      0 0 0 1px rgba(0, 0, 0, 0.05);
+  }
+
+  /* 画布本体 */
+  .poster-canvas {
+    @apply block;
+    border-radius: 8px;
+  }
+
+  /* 画布边框装饰 */
+  .canvas-border {
+    @apply absolute inset-0 pointer-events-none rounded-lg;
+    border: 2px solid transparent;
+    background: linear-gradient(45deg, #1890ff, #722ed1) border-box;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: exclude;
+    mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .canvas-wrapper:hover .canvas-border {
+    opacity: 0.3;
+  }
+
+  /* 属性面板 */
+  .property-group {
+    @apply p-4 border-b border-gray-100;
+  }
+
+  .property-label {
+    @apply block text-sm font-medium text-gray-700 mb-2;
+  }
+
+  /* 滚动条样式 */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db #f3f4f6;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #f3f4f6;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+}
+
+/* 工具提示样式 */
+@layer utilities {
+  .tooltip {
+    @apply absolute z-50 px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg pointer-events-none opacity-0 transition-opacity duration-200;
+  }
+
+  .tooltip.show {
+    @apply opacity-100;
+  }
+}
+
+/* Fabric.js 画布样式覆盖 - 参考 poster-design 风格 */
+.poster-workspace canvas {
+  border-radius: 8px !important;
+}
+
+/* 选择框样式 - 更现代的虚线边框 */
+.fabric-selection {
+  border-color: #1890ff !important;
+  border-style: dashed !important;
+}
+
+/* 控制点样式 - 小而精致的控制点 */
+.fabric-control-corner {
+  background-color: #1890ff !important;
+  border: 2px solid #ffffff !important;
+  border-radius: 2px !important;
+}
+
+/* 对象边框样式 */
+.fabric-object {
+  border-color: #1890ff !important;
+  border-style: dashed !important;
+}
+
+/* 悬停效果 */
+.poster-workspace:hover .canvas-wrapper {
+  transform: scale(1.001);
+  transition: transform 0.2s ease;
+}
+
+/* 拖拽状态 */
+.poster-workspace[style*="grabbing"] {
+  user-select: none;
+}
+
+.poster-workspace[style*="grabbing"] * {
+  pointer-events: none;
+}
+
+/* 画布动画效果 */
+.canvas-wrapper {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.canvas-wrapper:hover {
+  transform: scale(1.002) !important;
+}
+
+/* 浮动元素的进入动画 */
+.floating-toolbar,
+.floating-panel,
+.canvas-controls,
+.canvas-info,
+.canvas-navigator {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 1024px) {
+  .canvas-navigator {
+    display: none;
+  }
+
+  .floating-toolbar,
+  .floating-panel {
+    position: relative;
+    margin: 0.5rem;
+  }
+
+  .top-toolbar {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+  }
+
+  .text-toolbar {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .ruler {
+    display: none;
+  }
+
+  .canvas-controls {
+    bottom: 1rem;
+    right: 1rem;
+    padding: 0.5rem;
+  }
+
+  .canvas-info {
+    bottom: 1rem;
+    left: 1rem;
+    padding: 0.5rem;
+  }
+
+  .control-group {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .canvas-wrapper {
+    border: 2px solid #000;
+  }
+
+  .ruler {
+    border-color: #000;
+  }
+
+  .control-btn {
+    border: 1px solid #000;
+  }
+}
+
+/* 减少动画模式支持 */
+@media (prefers-reduced-motion: reduce) {
+
+  .canvas-wrapper,
+  .floating-toolbar,
+  .floating-panel,
+  .canvas-controls,
+  .canvas-info,
+  .canvas-navigator {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* 浮动工具栏 */
+.floating-toolbar {
+  @apply absolute z-30 bg-white rounded-lg shadow-lg border border-gray-200 p-2;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.top-toolbar {
+  @apply top-6 left-1/2 transform -translate-x-1/2;
+}
+
+.text-toolbar {
+  @apply top-20 left-1/2 transform -translate-x-1/2;
+}
+
+/* 浮动面板 */
+.floating-panel {
+  @apply absolute z-30 bg-white rounded-lg shadow-lg border border-gray-200;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.right-panel {
+  @apply top-6 right-6;
+}
+
+/* 画布控制工具 */
+.canvas-controls {
+  @apply absolute bottom-6 right-6 z-30 bg-white rounded-lg shadow-lg border border-gray-200 p-3;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.control-group {
+  @apply flex items-center gap-1 mb-2 last:mb-0;
+}
+
+.control-btn {
+  @apply flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors cursor-pointer text-gray-600 hover:text-gray-900;
+}
+
+.control-btn.active {
+  @apply bg-blue-50 text-blue-600;
+}
+
+.zoom-display {
+  @apply px-2 py-1 text-xs font-medium text-gray-700 bg-gray-50 rounded min-w-[50px] text-center;
+}
+
+/* 画布信息 */
+.canvas-info {
+  @apply absolute bottom-6 left-6 z-30 bg-white rounded-lg shadow-lg border border-gray-200 p-3 space-y-1;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.info-item {
+  @apply flex items-center gap-2 text-sm;
+}
+
+.info-label {
+  @apply text-gray-500 font-medium;
+}
+
+.info-value {
+  @apply text-gray-900 font-mono;
+}
+
+/* 缩放控制组件 */
+.zoom-controls {
+  @apply flex items-center gap-2 bg-white rounded-lg shadow-lg border border-gray-200 p-2;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.control-section {
+  @apply flex items-center gap-1;
+}
+
+.control-divider {
+  @apply w-px h-6 bg-gray-300 mx-1;
+}
+
+.zoom-display-btn {
+  @apply px-3 py-1 text-sm font-medium text-gray-700 bg-gray-50 rounded hover:bg-gray-100 transition-colors min-w-[60px] text-center cursor-pointer;
+}
+
+.zoom-input-form {
+  @apply relative flex items-center;
+}
+
+.zoom-input {
+  @apply w-16 px-2 py-1 text-sm text-center border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+}
+
+.zoom-unit {
+  @apply absolute right-1 text-xs text-gray-500 pointer-events-none;
+}
+
+.zoom-presets {
+  @apply hidden lg:flex items-center gap-1 ml-2 pl-2 border-l border-gray-300;
+}
+
+.preset-btn {
+  @apply px-2 py-1 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors;
+}
+
+.preset-btn.active {
+  @apply bg-blue-50 text-blue-600;
+}
+
+/* 画布状态栏 */
+.canvas-status-bar {
+  @apply flex items-center justify-between px-4 py-2 bg-white border-t border-gray-200 text-sm;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.status-section {
+  @apply flex items-center gap-4;
+}
+
+.status-item {
+  @apply flex items-center gap-1.5;
+}
+
+.status-label {
+  @apply text-gray-500 font-medium;
+}
+
+.status-value {
+  @apply text-gray-900 font-mono text-xs;
+}
+
+.status-icon {
+  @apply text-gray-500;
+}
+
+.object-properties {
+  @apply flex items-center gap-1 ml-1;
+}
+
+.property-icon {
+  @apply text-gray-400;
+}
+
+.history-indicators {
+  @apply flex items-center gap-0.5 ml-1;
+}
+
+.history-indicator {
+  @apply w-4 h-4 flex items-center justify-center text-xs rounded bg-gray-100 text-gray-400;
+}
+
+.history-indicator.active {
+  @apply bg-blue-100 text-blue-600;
+}
+
+/* 画布导航器 */
+.canvas-navigator {
+  @apply absolute top-4 right-4 z-40 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+  width: 180px;
+}
+
+.navigator-header {
+  @apply flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200;
+}
+
+.navigator-title {
+  @apply text-xs font-medium text-gray-700;
+}
+
+.navigator-controls {
+  @apply flex items-center gap-1;
+}
+
+.navigator-btn {
+  @apply flex items-center justify-center w-5 h-5 rounded hover:bg-gray-200 transition-colors text-gray-500 hover:text-gray-700;
+}
+
+.navigator-content {
+  @apply p-3 flex items-center justify-center;
+}
+
+.navigator-canvas {
+  @apply border border-gray-200 rounded cursor-pointer;
+}
+
+.navigator-info {
+  @apply px-3 py-2 bg-gray-50 border-t border-gray-200 text-center;
+}
+
+.navigator-zoom {
+  @apply text-xs font-mono text-gray-600;
+}
+
+/* 画布主题选择器 */
+.theme-selector {
+  @apply relative;
+}
+
+.theme-trigger {
+  @apply flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow border border-gray-200 hover:bg-gray-50 transition-colors;
+}
+
+.theme-name {
+  @apply text-sm font-medium text-gray-700;
+}
+
+.theme-dropdown {
+  @apply absolute top-full left-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50 min-w-[200px];
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.theme-header {
+  @apply px-3 py-2 border-b border-gray-200 text-sm font-medium text-gray-700;
+}
+
+.theme-list {
+  @apply p-2 space-y-1;
+}
+
+.theme-option {
+  @apply flex items-center gap-3 w-full px-3 py-2 rounded-md hover:bg-gray-50 transition-colors;
+}
+
+.theme-option.active {
+  @apply bg-blue-50 text-blue-700;
+}
+
+.theme-preview {
+  @apply w-6 h-6 rounded border border-gray-200 flex-shrink-0;
+}
+
+.theme-label {
+  @apply flex-1 text-left text-sm;
+}
+
+.theme-check {
+  @apply text-blue-600;
+}
+
+/* 画布尺寸选择器 */
+.canvas-size-selector {
+  @apply bg-white rounded-lg shadow-lg border border-gray-200 p-6 max-w-2xl;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.size-selector-header {
+  @apply mb-6;
+}
+
+.category-tabs {
+  @apply flex gap-2 mb-6 overflow-x-auto;
+}
+
+.category-tab {
+  @apply flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap;
+}
+
+.category-tab.active {
+  @apply bg-blue-50 border-blue-200 text-blue-700;
+}
+
+.presets-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-3 mb-6 max-h-80 overflow-y-auto;
+}
+
+.preset-item {
+  @apply flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-left relative;
+}
+
+.preset-item.current {
+  @apply bg-blue-50 border-blue-200;
+}
+
+.preset-icon {
+  @apply text-2xl flex-shrink-0;
+}
+
+.preset-info {
+  @apply flex-1 min-w-0;
+}
+
+.preset-name {
+  @apply font-medium text-gray-900 text-sm;
+}
+
+.preset-size {
+  @apply text-xs text-gray-600;
+}
+
+.preset-ratio {
+  @apply text-xs text-gray-500;
+}
+
+.preset-check {
+  @apply text-blue-600 absolute top-2 right-2;
+}
+
+.custom-size-section {
+  @apply border-t border-gray-200 pt-4;
+}
+
+.custom-toggle {
+  @apply flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors;
+}
+
+.custom-inputs {
+  @apply mt-4 space-y-4;
+}
+
+.input-group {
+  @apply space-y-1;
+}
+
+.input-group label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+.size-input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+}
+
+.apply-custom-btn {
+  @apply w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors;
+}
+
+/* 画布配置按钮 */
+.canvas-config-button {
+  @apply relative;
+}
+
+.config-trigger {
+  @apply flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow border border-gray-200 hover:bg-gray-50 transition-colors text-sm;
+}
+
+.config-text {
+  @apply font-mono text-xs text-gray-600;
+}
+
+.config-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-20 z-40;
+}
+
+.config-panel {
+  @apply absolute top-full left-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50 w-80 p-4;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.config-header {
+  @apply flex items-center justify-between mb-4;
+}
+
+.config-header h4 {
+  @apply font-semibold text-gray-900;
+}
+
+.config-close {
+  @apply w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700;
+}
+
+.quick-sizes {
+  @apply mb-4;
+}
+
+.quick-sizes h5 {
+  @apply text-sm font-medium text-gray-700 mb-2;
+}
+
+.quick-grid {
+  @apply grid grid-cols-2 gap-2;
+}
+
+.quick-item {
+  @apply flex items-center gap-2 p-2 rounded border border-gray-200 hover:bg-gray-50 transition-colors text-left;
+}
+
+.quick-item.active {
+  @apply bg-blue-50 border-blue-200;
+}
+
+.quick-icon {
+  @apply text-lg;
+}
+
+.quick-info {
+  @apply flex-1 min-w-0;
+}
+
+.quick-name {
+  @apply text-sm font-medium text-gray-900;
+}
+
+.quick-size {
+  @apply text-xs text-gray-600;
+}
+
+.category-section {
+  @apply mb-4;
+}
+
+.category-section h5 {
+  @apply text-sm font-medium text-gray-700 mb-2;
+}
+
+.category-buttons {
+  @apply flex gap-2;
+}
+
+.category-btn {
+  @apply flex-1 flex items-center justify-center gap-1 p-2 rounded border border-gray-200 hover:bg-gray-50 transition-colors text-xs;
+}
+
+.custom-section h5 {
+  @apply text-sm font-medium text-gray-700 mb-2;
+}
+
+.custom-inputs {
+  @apply flex items-center gap-2;
+}
+
+.custom-input {
+  @apply flex-1 px-2 py-1 border border-gray-300 rounded text-sm;
+}
+
+.custom-apply {
+  @apply px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors;
+}
+
+/* 项目管理器 */
+.project-manager {
+  @apply bg-white rounded-lg shadow-lg border border-gray-200 p-6 max-w-4xl max-h-[80vh] overflow-hidden flex flex-col;
+}
+
+.project-header {
+  @apply flex items-center justify-between mb-6;
+}
+
+.project-title {
+  @apply text-xl font-semibold text-gray-900;
+}
+
+.project-actions {
+  @apply flex items-center gap-2;
+}
+
+.action-btn {
+  @apply flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors cursor-pointer;
+}
+
+.action-btn.primary {
+  @apply bg-blue-600 text-white border-blue-600 hover:bg-blue-700;
+}
+
+.action-btn:not(.primary) {
+  @apply bg-white text-gray-700 border-gray-300 hover:bg-gray-50;
+}
+
+.action-btn:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.search-bar {
+  @apply relative mb-4;
+}
+
+.search-icon {
+  @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400;
+}
+
+.search-input {
+  @apply w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+}
+
+.project-tabs {
+  @apply flex border-b border-gray-200 mb-4;
+}
+
+.tab {
+  @apply px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 transition-colors;
+}
+
+.tab.active {
+  @apply text-blue-600 border-blue-600;
+}
+
+.project-list {
+  @apply flex-1 overflow-y-auto;
+}
+
+.empty-state {
+  @apply flex flex-col items-center justify-center py-12 text-center;
+}
+
+.empty-icon {
+  @apply text-gray-400 mb-4;
+}
+
+.empty-state h4 {
+  @apply text-lg font-medium text-gray-900 mb-2;
+}
+
+.empty-state p {
+  @apply text-gray-600 mb-4;
+}
+
+.create-btn {
+  @apply flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors;
+}
+
+.project-grid {
+  @apply grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3;
+}
+
+.project-card {
+  @apply relative bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer;
+}
+
+.project-thumbnail {
+  @apply relative aspect-[4/3] bg-gray-100 overflow-hidden;
+}
+
+.project-thumbnail img {
+  @apply w-full h-full object-cover;
+}
+
+.thumbnail-placeholder {
+  @apply w-full h-full flex items-center justify-center text-gray-400;
+}
+
+.thumbnail-overlay {
+  @apply absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 transition-opacity;
+}
+
+.project-thumbnail:hover .thumbnail-overlay {
+  @apply opacity-100;
+}
+
+.overlay-btn {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors;
+}
+
+.overlay-btn.primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.project-info {
+  @apply p-3;
+}
+
+.project-name {
+  @apply font-medium text-gray-900 truncate mb-1;
+}
+
+.project-meta {
+  @apply flex items-center justify-between text-xs text-gray-500;
+}
+
+.project-size {
+  @apply font-mono;
+}
+
+.project-time {
+  @apply flex items-center gap-1;
+}
+
+.project-menu {
+  @apply absolute top-2 right-2;
+}
+
+.menu-trigger {
+  @apply w-8 h-8 flex items-center justify-center rounded-full bg-white bg-opacity-80 hover:bg-opacity-100 transition-colors;
+}
+
+.menu-dropdown {
+  @apply absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 min-w-[120px];
+}
+
+.menu-item {
+  @apply flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors;
+}
+
+.menu-item.danger {
+  @apply text-red-600 hover:bg-red-50;
+}
+
+.save-dialog-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
+}
+
+.save-dialog {
+  @apply bg-white rounded-lg shadow-xl p-6 w-full max-w-md;
+}
+
+.save-dialog h4 {
+  @apply text-lg font-semibold text-gray-900 mb-4;
+}
+
+.dialog-content {
+  @apply mb-6;
+}
+
+.dialog-content label {
+  @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+.project-name-input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+}
+
+.dialog-actions {
+  @apply flex justify-end gap-3;
+}
+
+.dialog-btn {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors;
+}
+
+.dialog-btn.secondary {
+  @apply bg-gray-100 text-gray-700 hover:bg-gray-200;
+}
+
+.dialog-btn.primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.dialog-btn:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* 项目管理器 */
+.project-manager-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4;
+}
+
+.project-manager {
+  @apply bg-white rounded-lg shadow-xl w-full max-w-6xl h-full max-h-[90vh] flex flex-col;
+}
+
+.project-header {
+  @apply flex items-center justify-between p-6 border-b border-gray-200;
+}
+
+.header-left {
+  @apply flex items-center gap-3;
+}
+
+.project-title {
+  @apply text-xl font-semibold text-gray-900;
+}
+
+.project-count {
+  @apply text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded;
+}
+
+.header-right {
+  @apply flex items-center gap-3;
+}
+
+.btn-primary {
+  @apply flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors;
+}
+
+.btn-secondary {
+  @apply flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors;
+}
+
+.btn-danger {
+  @apply flex items-center gap-2 px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors;
+}
+
+.btn-close {
+  @apply p-2 hover:bg-gray-100 rounded-lg transition-colors;
+}
+
+.project-toolbar {
+  @apply flex items-center justify-between p-4 border-b border-gray-200;
+}
+
+.toolbar-left {
+  @apply flex items-center gap-4;
+}
+
+.search-box {
+  @apply relative;
+}
+
+.search-icon {
+  @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400;
+}
+
+.search-input {
+  @apply pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+}
+
+.category-filter {
+  @apply flex items-center gap-2;
+}
+
+.category-select {
+  @apply px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+}
+
+.toolbar-right {
+  @apply flex items-center gap-3;
+}
+
+.batch-actions {
+  @apply flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg;
+}
+
+.selected-count {
+  @apply text-sm text-blue-700 font-medium;
+}
+
+.view-toggle {
+  @apply flex border border-gray-300 rounded-lg overflow-hidden;
+}
+
+.view-btn {
+  @apply p-2 hover:bg-gray-100 transition-colors;
+}
+
+.view-btn.active {
+  @apply bg-blue-100 text-blue-600;
+}
+
+.recent-section {
+  @apply p-4 border-b border-gray-200;
+}
+
+.section-title {
+  @apply flex items-center gap-2 text-sm font-medium text-gray-700 mb-3;
+}
+
+.recent-projects {
+  @apply flex gap-3 overflow-x-auto;
+}
+
+.recent-item {
+  @apply flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors min-w-[200px];
+}
+
+.recent-thumbnail {
+  @apply w-12 h-9 object-cover rounded border;
+}
+
+.recent-info {
+  @apply flex-1 min-w-0;
+}
+
+.recent-name {
+  @apply font-medium text-sm text-gray-900 truncate;
+}
+
+.recent-time {
+  @apply text-xs text-gray-500;
+}
+
+.project-content {
+  @apply flex-1 overflow-y-auto p-4;
+}
+
+.loading-state {
+  @apply flex flex-col items-center justify-center h-64 text-gray-500;
+}
+
+.loading-spinner {
+  @apply w-8 h-8 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mb-4;
+}
+
+.empty-state {
+  @apply flex flex-col items-center justify-center h-64 text-gray-500;
+}
+
+.empty-icon {
+  @apply mb-4 text-gray-400;
+}
+
+/* Grid view modifiers removed - using default responsive grid */
+
+.project-card.selected {
+  @apply border-blue-500 bg-blue-50;
+}
+
+.project-thumbnail {
+  @apply relative aspect-[4/3] overflow-hidden rounded-t-lg;
+}
+
+.thumbnail-image {
+  @apply w-full h-full object-cover;
+}
+
+.thumbnail-overlay {
+  @apply absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-end justify-end p-2;
+}
+
+.project-size {
+  @apply text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity;
+}
+
+.project-info {
+  @apply p-3;
+}
+
+.project-name {
+  @apply font-medium text-sm text-gray-900 truncate mb-1;
+}
+
+.project-meta {
+  @apply flex items-center justify-between text-xs text-gray-500;
+}
+
+.project-actions {
+  @apply absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity;
+}
+
+.action-btn {
+  @apply p-1 bg-white bg-opacity-90 rounded hover:bg-opacity-100 transition-all;
+}
+
+.context-menu {
+  @apply absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-[120px];
+}
+
+.context-menu button {
+  @apply flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors;
+}
+
+.context-menu button.danger {
+  @apply text-red-600 hover:bg-red-50;
+}
+
+.context-menu hr {
+  @apply border-gray-200 my-1;
+}
+
+.project-checkbox {
+  @apply absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity;
+}
+
+.project-checkbox input {
+  @apply w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500;
+}
+
+/* 加载动画 */
+.loading-spinner {
+  @apply inline-block w-4 h-4 border-2 border-gray-300 border-t-primary-500 rounded-full animate-spin;
+}
+
+/* 响应式隐藏 */
+@media (max-width: 768px) {
+  .hidden-mobile {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .hidden-tablet {
+    display: none !important;
+  }
+}
+
+/* 文本工具栏样式 */
+.font-family-preview {
+  @apply transition-colors duration-150;
+}
+
+.font-family-preview:hover {
+  @apply bg-gray-50;
+}
+
+/* 颜色选择器样式 */
+.react-colorful {
+  width: 200px !important;
+  height: 120px !important;
+}
+
+.react-colorful__saturation {
+  border-radius: 6px 6px 0 0;
+}
+
+.react-colorful__hue {
+  height: 20px;
+  border-radius: 0 0 6px 6px;
+}
+
+.react-colorful__pointer {
+  width: 16px;
+  height: 16px;
+}

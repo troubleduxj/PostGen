@@ -1,0 +1,69 @@
+import React from 'react';
+import { Toolbar } from './Toolbar';
+import { LeftPanel } from './LeftPanel';
+import { Canvas } from './Canvas';
+
+import { RightPanel } from './RightPanel';
+import { CanvasStatusBar } from './CanvasStatusBar';
+import { useEditorStore } from '@/stores/editorStore';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+
+export const Editor: React.FC = () => {
+  const { isLoading, error } = useEditorStore();
+  
+  // 启用键盘快捷键
+  useKeyboardShortcuts();
+
+  if (error) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-red-50">
+        <div className="text-center">
+          <div className="text-red-600 text-lg font-medium mb-2">编辑器加载失败</div>
+          <div className="text-red-500 text-sm">{error}</div>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            重新加载
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-screen flex flex-col bg-gray-50">
+      {/* 顶部工具栏 */}
+      <Toolbar />
+      
+      {/* 主要内容区域 */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* 左侧面板 */}
+        <LeftPanel />
+        
+        {/* 中央画布区域 */}
+        <div className="flex-1 flex flex-col">
+          <div className="flex-1 relative">
+            <Canvas />
+            
+            {/* 加载遮罩 */}
+            {isLoading && (
+              <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+                <div className="text-center">
+                  <div className="loading-spinner mb-3"></div>
+                  <div className="text-sm text-gray-600">正在加载画布...</div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* 底部状态栏 */}
+          <CanvasStatusBar />
+        </div>
+        
+        {/* 右侧属性面板 */}
+        <RightPanel />
+      </div>
+    </div>
+  );
+};
