@@ -23,7 +23,19 @@ export default defineConfig({
   },
   server: {
     port: 3001,
-    open: true
+    open: true,
+    proxy: {
+      '/api/excalidraw': {
+        target: 'https://libraries.excalidraw.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/excalidraw/, ''),
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      },
+    },
   },
   optimizeDeps: {
     include: ['fabric', 'zustand', 'lucide-react']

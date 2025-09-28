@@ -187,8 +187,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
   ];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[95vh] overflow-hidden flex flex-col">
         {/* 头部 */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
@@ -257,42 +257,42 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
         </div>
 
         {/* 内容 */}
-        <div className="p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* 预览信息 */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <Image className="w-5 h-5 text-gray-600" />
-              <h3 className="font-medium text-gray-900">当前画布</h3>
+          <div className="bg-gray-50 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Image className="w-4 h-4 text-gray-600" />
+              <h3 className="text-sm font-medium text-gray-900">当前画布</h3>
             </div>
-            <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
               <div>
                 <span className="text-gray-500">尺寸:</span>
-                <span className="ml-2 font-medium">{canvasState.width} × {canvasState.height}px</span>
+                <span className="ml-1 font-medium">{canvasState.width} × {canvasState.height}px</span>
               </div>
               <div>
                 <span className="text-gray-500">导出尺寸:</span>
-                <span className="ml-2 font-medium">
+                <span className="ml-1 font-medium">
                   {Math.round(canvasState.width * currentSettings.scale)} × {Math.round(canvasState.height * currentSettings.scale)}px
                 </span>
               </div>
               <div>
                 <span className="text-gray-500">文件大小:</span>
-                <span className="ml-2 font-medium">约 {Math.round(canvasState.width * canvasState.height * currentSettings.scale * currentSettings.scale * 3 / 1024)}KB</span>
+                <span className="ml-1 font-medium">约 {Math.round(canvasState.width * canvasState.height * currentSettings.scale * currentSettings.scale * 3 / 1024)}KB</span>
               </div>
             </div>
           </div>
 
           {/* 格式选择 */}
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <FileText className="w-5 h-5 text-gray-600" />
-              <h3 className="font-medium text-gray-900">导出格式</h3>
+            <div className="flex items-center gap-2 mb-2">
+              <FileText className="w-4 h-4 text-gray-600" />
+              <h3 className="text-sm font-medium text-gray-900">导出格式</h3>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {formatOptions.map((format) => (
                 <label
                   key={format.value}
-                  className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                  className={`flex items-center gap-2 p-2 border rounded-lg cursor-pointer transition-colors ${
                     currentSettings.format === format.value
                       ? 'border-primary-200 bg-primary-50'
                       : 'border-gray-200 hover:border-gray-300'
@@ -304,12 +304,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
                     value={format.value}
                     checked={currentSettings.format === format.value}
                     onChange={(e) => updateSettings({ format: e.target.value as any })}
-                    className="mt-1"
+                    className="text-primary-600"
                   />
-                  <div>
-                    <div className="font-medium text-gray-900">{format.label}</div>
-                    <div className="text-sm text-gray-500">{format.description}</div>
-                  </div>
+                  <div className="text-sm font-medium text-gray-900">{format.label}</div>
                 </label>
               ))}
             </div>
@@ -317,23 +314,23 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
 
           {/* 质量设置 */}
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Settings className="w-5 h-5 text-gray-600" />
-              <h3 className="font-medium text-gray-900">质量设置</h3>
+            <div className="flex items-center gap-2 mb-2">
+              <Settings className="w-4 h-4 text-gray-600" />
+              <h3 className="text-sm font-medium text-gray-900">质量设置</h3>
             </div>
             
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* 缩放比例 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">缩放比例</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">缩放比例</label>
                 <select
                   value={currentSettings.scale}
                   onChange={(e) => updateSettings({ scale: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                 >
                   {scaleOptions.map((option) => (
                     <option key={option.value} value={option.value}>
-                      {option.label}
+                      {option.label} - {option.description}
                     </option>
                   ))}
                 </select>

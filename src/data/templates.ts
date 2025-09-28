@@ -7,47 +7,103 @@ export const templateCategories: TemplateCategory[] = [
     name: '商务海报',
     description: '专业商务场景海报模板',
     icon: '💼',
-    count: 12
+    count: 3
   },
   {
     id: 'social',
     name: '社交媒体',
     description: '适合社交平台的海报模板',
     icon: '📱',
-    count: 18
+    count: 2
   },
   {
     id: 'event',
     name: '活动宣传',
     description: '活动、会议、展览海报模板',
     icon: '🎉',
-    count: 15
+    count: 1
   },
   {
     id: 'education',
     name: '教育培训',
     description: '教育、培训、课程海报模板',
     icon: '📚',
-    count: 10
+    count: 2
   },
   {
     id: 'creative',
     name: '创意设计',
     description: '艺术、创意、个性化海报模板',
     icon: '🎨',
-    count: 20
+    count: 2
   },
   {
     id: 'holiday',
     name: '节日庆典',
     description: '节日、庆典、纪念日海报模板',
     icon: '🎊',
-    count: 8
+    count: 1
   }
 ];
 
+// 简单测试模板
+const testTemplate: Template = {
+  id: 'test-simple',
+  name: '简单测试模板',
+  description: '包含矩形和文本的简单测试模板，用于验证模板应用功能是否正常工作',
+  category: 'business',
+  tags: ['测试', '简单', '矩形', '文本'],
+  thumbnail: '/templates/test.jpg',
+  width: 800,
+  height: 600,
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z',
+  isPublic: true,
+  author: 'System',
+  objects: {
+    type: 'canvas',
+    version: '5.3.0',
+    objects: [
+      {
+        type: 'rect',
+        left: 100,
+        top: 100,
+        width: 200,
+        height: 150,
+        fill: '#3B82F6',
+        stroke: '#1E40AF',
+        strokeWidth: 2,
+        rx: 10,
+        ry: 10
+      },
+      {
+        type: 'text',
+        left: 200,
+        top: 300,
+        text: '测试文本',
+        fontSize: 32,
+        fontFamily: 'Arial',
+        fontWeight: 'bold',
+        fill: '#1F2937',
+        originX: 'center',
+        originY: 'center'
+      },
+      {
+        type: 'circle',
+        left: 500,
+        top: 150,
+        radius: 60,
+        fill: '#EF4444',
+        stroke: '#DC2626',
+        strokeWidth: 3
+      }
+    ]
+  }
+};
+
 // 预设模板数据
 export const templates: Template[] = [
+  testTemplate,
   // 商务海报模板
   {
     id: 'business-001',
@@ -84,7 +140,7 @@ export const templates: Template[] = [
           top: 0,
           width: 800,
           height: 300,
-          fill: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          fill: '#667eea',
           selectable: false,
           evented: false
         },
@@ -139,7 +195,7 @@ export const templates: Template[] = [
       ]
     }
   },
-  
+
   // 社交媒体模板
   {
     id: 'social-001',
@@ -165,7 +221,7 @@ export const templates: Template[] = [
           top: 0,
           width: 1080,
           height: 1920,
-          fill: 'linear-gradient(45deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%)',
+          fill: '#ff9a9e',
           selectable: false,
           evented: false
         },
@@ -181,13 +237,7 @@ export const templates: Template[] = [
           fill: '#ffffff',
           textAlign: 'center',
           originX: 'center',
-          originY: 'center',
-          shadow: {
-            color: 'rgba(0,0,0,0.3)',
-            blur: 10,
-            offsetX: 0,
-            offsetY: 4
-          }
+          originY: 'center'
         },
         // 内容文本
         {
@@ -555,6 +605,534 @@ export const templates: Template[] = [
         }
       ]
     }
+  },
+
+  // 教育培训模板 2
+  {
+    id: 'education-002',
+    name: '编程培训海报',
+    description: '适合编程和技术培训课程的宣传海报',
+    category: 'education',
+    thumbnail: '/templates/education-002-thumb.jpg',
+    width: 800,
+    height: 1200,
+    tags: ['教育', '课程', '培训', '学习'],
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+    isPublic: true,
+    author: 'System',
+    objects: {
+      type: 'canvas',
+      version: '5.3.0',
+      objects: [
+        {
+          type: 'rect',
+          left: 0,
+          top: 0,
+          width: 800,
+          height: 1200,
+          fill: '#f0f9ff'
+        },
+        {
+          type: 'rect',
+          left: 50,
+          top: 50,
+          width: 700,
+          height: 200,
+          fill: '#0ea5e9',
+          rx: 20,
+          ry: 20
+        },
+        {
+          type: 'text',
+          left: 400,
+          top: 150,
+          text: '在线编程课程',
+          fontSize: 42,
+          fontFamily: 'Arial',
+          fontWeight: 'bold',
+          fill: '#ffffff',
+          originX: 'center',
+          originY: 'center'
+        },
+        {
+          type: 'text',
+          left: 100,
+          top: 350,
+          text: '• 零基础入门\n• 实战项目练习\n• 专业导师指导\n• 终身学习支持',
+          fontSize: 24,
+          fontFamily: 'Arial',
+          fill: '#374151',
+          lineHeight: 1.6
+        },
+        {
+          type: 'rect',
+          left: 600,
+          top: 800,
+          width: 150,
+          height: 60,
+          fill: '#10b981',
+          rx: 30,
+          ry: 30
+        },
+        {
+          type: 'text',
+          left: 675,
+          top: 830,
+          text: '立即报名',
+          fontSize: 20,
+          fontFamily: 'Arial',
+          fontWeight: 'bold',
+          fill: '#ffffff',
+          originX: 'center',
+          originY: 'center'
+        }
+      ]
+    }
+  },
+
+  // 创意设计模板 2
+  {
+    id: 'creative-002',
+    name: '现代艺术海报',
+    description: '适合现代艺术展览和创意活动的设计海报',
+    category: 'creative',
+    thumbnail: '/templates/creative-002-thumb.jpg',
+    width: 800,
+    height: 1200,
+    tags: ['艺术', '展览', '创意', '现代'],
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+    isPublic: true,
+    author: 'System',
+    objects: {
+      type: 'canvas',
+      version: '5.3.0',
+      objects: [
+        {
+          type: 'rect',
+          left: 0,
+          top: 0,
+          width: 800,
+          height: 1200,
+          fill: '#1f2937'
+        },
+        {
+          type: 'circle',
+          left: 200,
+          top: 200,
+          radius: 100,
+          fill: '#f59e0b',
+          opacity: 0.8
+        },
+        {
+          type: 'circle',
+          left: 500,
+          top: 300,
+          radius: 80,
+          fill: '#ef4444',
+          opacity: 0.7
+        },
+        {
+          type: 'circle',
+          left: 350,
+          top: 450,
+          radius: 60,
+          fill: '#8b5cf6',
+          opacity: 0.9
+        },
+        {
+          type: 'text',
+          left: 400,
+          top: 700,
+          text: 'MODERN\nART EXPO',
+          fontSize: 48,
+          fontFamily: 'Arial',
+          fontWeight: 'bold',
+          fill: '#ffffff',
+          originX: 'center',
+          originY: 'center',
+          textAlign: 'center',
+          lineHeight: 1.2
+        },
+        {
+          type: 'text',
+          left: 400,
+          top: 900,
+          text: '2024.08.15 - 2024.09.15',
+          fontSize: 20,
+          fontFamily: 'Arial',
+          fill: '#d1d5db',
+          originX: 'center',
+          originY: 'center'
+        }
+      ]
+    }
+  },
+
+  // 节日庆典模板
+  {
+    id: 'holiday-001',
+    name: '春节祝福海报',
+    description: '传统节日祝福海报，适合春节等重要节日',
+    category: 'holiday',
+    thumbnail: '/templates/holiday-001-thumb.jpg',
+    width: 800,
+    height: 1200,
+    tags: ['春节', '节日', '祝福', '传统'],
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+    isPublic: true,
+    author: 'System',
+    objects: {
+      type: 'canvas',
+      version: '5.3.0',
+      objects: [
+        {
+          type: 'rect',
+          left: 0,
+          top: 0,
+          width: 800,
+          height: 1200,
+          fill: '#dc2626'
+        },
+        {
+          type: 'circle',
+          left: 100,
+          top: 100,
+          radius: 40,
+          fill: '#fbbf24',
+          opacity: 0.8
+        },
+        {
+          type: 'circle',
+          left: 650,
+          top: 150,
+          radius: 30,
+          fill: '#fbbf24',
+          opacity: 0.6
+        },
+        {
+          type: 'text',
+          left: 400,
+          top: 400,
+          text: '新年快乐',
+          fontSize: 72,
+          fontFamily: 'Arial',
+          fontWeight: 'bold',
+          fill: '#fbbf24',
+          originX: 'center',
+          originY: 'center'
+        },
+        {
+          type: 'text',
+          left: 400,
+          top: 500,
+          text: 'HAPPY NEW YEAR',
+          fontSize: 24,
+          fontFamily: 'Arial',
+          fill: '#ffffff',
+          originX: 'center',
+          originY: 'center'
+        },
+        {
+          type: 'text',
+          left: 400,
+          top: 800,
+          text: '恭喜发财 · 万事如意',
+          fontSize: 28,
+          fontFamily: 'Arial',
+          fill: '#fbbf24',
+          originX: 'center',
+          originY: 'center'
+        }
+      ]
+    }
+  },
+
+  // 社交媒体模板 2
+  {
+    id: 'social-002',
+    name: '朋友圈分享',
+    description: '适合微信朋友圈分享的方形海报模板',
+    category: 'social',
+    thumbnail: '/templates/social-002-thumb.jpg',
+    width: 1080,
+    height: 1080,
+    tags: ['朋友圈', '分享', '社交', '方形'],
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+    isPublic: true,
+    author: 'System',
+    objects: {
+      type: 'canvas',
+      version: '5.3.0',
+      objects: [
+        {
+          type: 'rect',
+          left: 0,
+          top: 0,
+          width: 1080,
+          height: 1080,
+          fill: '#667eea'
+        },
+        {
+          type: 'rect',
+          left: 90,
+          top: 90,
+          width: 900,
+          height: 900,
+          fill: '#ffffff',
+          rx: 40,
+          ry: 40,
+          opacity: 0.95
+        },
+        {
+          type: 'text',
+          left: 540,
+          top: 300,
+          text: '今日分享',
+          fontSize: 48,
+          fontFamily: 'Arial',
+          fontWeight: 'bold',
+          fill: '#374151',
+          originX: 'center',
+          originY: 'center'
+        },
+        {
+          type: 'text',
+          left: 540,
+          top: 540,
+          text: '生活中的美好瞬间\n值得被记录和分享',
+          fontSize: 24,
+          fontFamily: 'Arial',
+          fill: '#6b7280',
+          originX: 'center',
+          originY: 'center',
+          textAlign: 'center',
+          lineHeight: 1.5
+        },
+        {
+          type: 'circle',
+          left: 200,
+          top: 750,
+          radius: 20,
+          fill: '#f59e0b'
+        },
+        {
+          type: 'circle',
+          left: 540,
+          top: 800,
+          radius: 15,
+          fill: '#ef4444'
+        },
+        {
+          type: 'circle',
+          left: 800,
+          top: 720,
+          radius: 25,
+          fill: '#10b981'
+        }
+      ]
+    }
+  },
+
+  // 企业会议模板
+  {
+    id: 'business-002',
+    name: '企业会议邀请函',
+    description: '蓝色科技风格的企业会议邀请函模板',
+    category: 'business',
+    thumbnail: '/templates/business-002-thumb.jpg',
+    width: 800,
+    height: 1200,
+    tags: ['会议', '邀请函', '企业', '蓝色', '科技'],
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+    isPublic: true,
+    author: 'System',
+    objects: {
+      type: 'canvas',
+      version: '5.3.0',
+      objects: [
+        // 背景 - 使用纯色替代渐变，因为Fabric.js渐变语法不同
+        {
+          type: 'rect',
+          left: 0,
+          top: 0,
+          width: 800,
+          height: 1200,
+          fill: '#1e40af'
+        },
+        // 装饰圆形
+        {
+          type: 'circle',
+          left: 150,
+          top: 300,
+          radius: 120,
+          fill: 'rgba(59, 130, 246, 0.3)',
+          stroke: 'rgba(147, 197, 253, 0.5)',
+          strokeWidth: 2
+        },
+        {
+          type: 'circle',
+          left: 200,
+          top: 350,
+          radius: 80,
+          fill: 'rgba(59, 130, 246, 0.2)',
+          stroke: 'rgba(147, 197, 253, 0.3)',
+          strokeWidth: 1
+        },
+        {
+          type: 'circle',
+          left: 100,
+          top: 500,
+          radius: 40,
+          fill: 'rgba(59, 130, 246, 0.4)'
+        },
+        // Logo区域
+        {
+          type: 'circle',
+          left: 80,
+          top: 80,
+          radius: 25,
+          fill: '#ffffff',
+          stroke: '#e5e7eb',
+          strokeWidth: 2
+        },
+        {
+          type: 'text',
+          left: 130,
+          top: 90,
+          text: 'YOUR LOGO',
+          fontSize: 18,
+          fontFamily: 'Arial',
+          fontWeight: 'bold',
+          fill: '#ffffff'
+        },
+        // 主标题
+        {
+          type: 'text',
+          left: 600,
+          top: 200,
+          text: '邀请函',
+          fontSize: 80,
+          fontFamily: 'Arial',
+          fontWeight: 'bold',
+          fill: '#ffffff',
+          originX: 'center',
+          originY: 'center'
+        },
+        // 会议信息
+        {
+          type: 'text',
+          left: 600,
+          top: 350,
+          text: '2024第十一届\n互联网企业会议',
+          fontSize: 24,
+          fontFamily: 'Arial',
+          fontWeight: 'bold',
+          fill: '#ffffff',
+          originX: 'center',
+          originY: 'center',
+          textAlign: 'center',
+          lineHeight: 1.4
+        },
+        // 会议主题
+        {
+          type: 'text',
+          left: 80,
+          top: 600,
+          text: '会议主题',
+          fontSize: 20,
+          fontFamily: 'Arial',
+          fontWeight: 'bold',
+          fill: '#ffffff'
+        },
+        {
+          type: 'text',
+          left: 80,
+          top: 640,
+          text: '互联网下的风险管理与企业运营',
+          fontSize: 18,
+          fontFamily: 'Arial',
+          fill: '#e5e7eb'
+        },
+        // 时间信息
+        {
+          type: 'text',
+          left: 80,
+          top: 720,
+          text: '时间',
+          fontSize: 20,
+          fontFamily: 'Arial',
+          fontWeight: 'bold',
+          fill: '#ffffff'
+        },
+        {
+          type: 'text',
+          left: 80,
+          top: 760,
+          text: '2024年9月8日-9月10日',
+          fontSize: 18,
+          fontFamily: 'Arial',
+          fill: '#e5e7eb'
+        },
+        // 地址信息
+        {
+          type: 'text',
+          left: 80,
+          top: 840,
+          text: '地址',
+          fontSize: 20,
+          fontFamily: 'Arial',
+          fontWeight: 'bold',
+          fill: '#ffffff'
+        },
+        {
+          type: 'text',
+          left: 80,
+          top: 880,
+          text: '迅排国际会议中心A座',
+          fontSize: 18,
+          fontFamily: 'Arial',
+          fill: '#e5e7eb'
+        },
+        // 二维码区域
+        {
+          type: 'rect',
+          left: 600,
+          top: 800,
+          width: 80,
+          height: 80,
+          fill: '#ffffff',
+          rx: 8,
+          ry: 8
+        },
+        {
+          type: 'text',
+          left: 640,
+          top: 840,
+          text: 'QR',
+          fontSize: 16,
+          fontFamily: 'Arial',
+          fontWeight: 'bold',
+          fill: '#1e40af',
+          originX: 'center',
+          originY: 'center'
+        },
+        {
+          type: 'text',
+          left: 600,
+          top: 900,
+          text: '扫码了解详情',
+          fontSize: 14,
+          fontFamily: 'Arial',
+          fill: '#ffffff',
+          originX: 'center'
+        }
+      ]
+    }
   }
 ];
 
@@ -566,7 +1144,7 @@ export const getTemplatesByCategory = (categoryId: string): Template[] => {
 // 搜索模板
 export const searchTemplates = (query: string): Template[] => {
   const lowercaseQuery = query.toLowerCase();
-  return templates.filter(template => 
+  return templates.filter(template =>
     template.name.toLowerCase().includes(lowercaseQuery) ||
     template.description.toLowerCase().includes(lowercaseQuery) ||
     template.tags.some(tag => tag.toLowerCase().includes(lowercaseQuery))

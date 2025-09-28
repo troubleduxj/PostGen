@@ -55,7 +55,21 @@ export const CanvasStatusBar: React.FC<CanvasStatusBarProps> = ({ className = ''
   const isOnline = navigator.onLine;
 
   return (
-    <div className={`canvas-status-bar ${className}`}>
+    <div 
+      className={`canvas-status-bar ${className}`}
+      style={{
+        backgroundColor: 'white',
+        borderTop: '1px solid #e5e7eb',
+        height: '40px',
+        zIndex: 10,
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 16px',
+        fontSize: '12px'
+      }}
+    >
       {/* 左侧信息 */}
       <div className="status-section">
         {/* 画布信息 */}

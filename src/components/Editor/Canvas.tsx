@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { fabric } from 'fabric';
-import { CanvasConfigButton } from './CanvasConfigButton';
 import { useEditorStore } from '@/stores/editorStore';
 
 interface CanvasProps {
@@ -10,13 +9,14 @@ interface CanvasProps {
 export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
-  const { setCanvas, canvasState, updateCanvasState } = useEditorStore();
+  const { setCanvas, canvasState, updateCanvasState, preferences } = useEditorStore();
   const [canvasSize, setCanvasSize] = useState({ 
     width: canvasState.width, 
     height: canvasState.height 
   });
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [canvasContainerRef, setCanvasContainerRef] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -34,6 +34,8 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
     
     // 将canvas实例传递给store
     setCanvas(fabricCanvas);
+    
+    console.log('Canvas created and set to store');
 
     // 设置现代化的选择样式
     fabricCanvas.selectionColor = 'rgba(24, 144, 255, 0.08)';
@@ -110,27 +112,52 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
 
     // 清理函数
     return () => {
+      console.log('Canvas disposing...');
       fabricCanvas.dispose();
     };
+  }, []); // 移除canvasSize依赖，只在组件挂载时创建一次
+
+  // 单独处理canvas尺寸变化
+  useEffect(() => {
+    if (fabricCanvasRef.current) {
+      console.log('Updating canvas size:', canvasSize);
+      fabricCanvasRef.current.setDimensions({ 
+        width: canvasSize.width, 
+        height: canvasSize.height 
+      });
+      fabricCanvasRef.current.renderAll();
+    }
   }, [canvasSize]);
+
+  // 监听preferences变化，动态更新画布容器样式
+  useEffect(() => {
+    if (canvasContainerRef) {
+      const showBorder = preferences?.showCanvasBorder ?? false;
+      
+      canvasContainerRef.style.padding = showBorder ? '20px' : '0px';
+      canvasContainerRef.style.backgroundColor = showBorder ? '#ffffff' : 'transparent';
+      canvasContainerRef.style.borderRadius = showBorder ? '12px' : '0px';
+      canvasContainerRef.style.boxShadow = showBorder ? '0 8px 32px rgba(0,0,0,0.15)' : 'none';
+      canvasContainerRef.style.border = showBorder ? '1px solid #e0e0e0' : 'none';
+    }
+  }, [preferences?.showCanvasBorder, canvasContainerRef]);
 
   // 处理画布尺寸变化
   const handleSizeChange = (width: number, height: number) => {
     setCanvasSize({ width, height });
     updateCanvasState({ width, height });
-    
-    if (fabricCanvasRef.current) {
-      fabricCanvasRef.current.setDimensions({ width, height });
-      fabricCanvasRef.current.renderAll();
-    }
   };
 
-  // 键盘快捷键处理
+  // 键盘快捷键和鼠标事件处理
   useEffect(() => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas || !canvas.getElement()) return;
+
+    let isPanning = false;
+    let lastPosX = 0;
+    let lastPosY = 0;
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!fabricCanvasRef.current) return;
-      
-      const canvas = fabricCanvasRef.current;
       const activeObject = canvas.getActiveObject();
       
       // 防止在输入框中触发
@@ -162,6 +189,51 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
         }
         e.preventDefault();
       }
+
+      // 缩放快捷键
+      if (e.ctrlKey) {
+        if (e.key === '=' || e.key === '+') {
+          // 放大
+          let zoom = canvas.getZoom();
+          zoom = Math.min(zoom * 1.2, 5);
+          canvas.setZoom(zoom);
+          canvas.renderAll();
+          updateCanvasState({ zoom });
+          e.preventDefault();
+        } else if (e.key === '-') {
+          // 缩小
+          let zoom = canvas.getZoom();
+          zoom = Math.max(zoom / 1.2, 0.1);
+          canvas.setZoom(zoom);
+          canvas.renderAll();
+          updateCanvasState({ zoom });
+          e.preventDefault();
+        } else if (e.key === '0') {
+          // 适应屏幕
+          const container = canvas.getElement().parentElement?.parentElement;
+          if (container) {
+            const containerWidth = container.clientWidth - 80;
+            const containerHeight = container.clientHeight - 80;
+            const canvasWidth = canvas.getWidth();
+            const canvasHeight = canvas.getHeight();
+            
+            const scaleX = containerWidth / canvasWidth;
+            const scaleY = containerHeight / canvasHeight;
+            const scale = Math.min(scaleX, scaleY, 1);
+            
+            canvas.setZoom(scale);
+            canvas.renderAll();
+            updateCanvasState({ zoom: scale });
+          }
+          e.preventDefault();
+        } else if (e.key === '1') {
+          // 重置缩放
+          canvas.setZoom(1);
+          canvas.renderAll();
+          updateCanvasState({ zoom: 1 });
+          e.preventDefault();
+        }
+      }
       
       // 方向键移动对象
       if (activeObject && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
@@ -187,11 +259,117 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
         canvas.renderAll();
         e.preventDefault();
       }
+
+      // 空格键开始平移
+      if (e.code === 'Space' && !isPanning) {
+        isPanning = true;
+        (canvas as any)._isPanning = true;
+        canvas.selection = false;
+        canvas.defaultCursor = 'grab';
+        canvas.hoverCursor = 'grab';
+        e.preventDefault();
+      }
     };
 
+    const handleKeyUp = (e: KeyboardEvent) => {
+      // 空格键结束平移
+      if (e.code === 'Space' && isPanning) {
+        isPanning = false;
+        (canvas as any)._isPanning = false;
+        canvas.selection = true;
+        canvas.defaultCursor = 'default';
+        canvas.hoverCursor = 'move';
+        e.preventDefault();
+      }
+    };
+
+    // 鼠标滚轮缩放
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      
+      const delta = e.deltaY;
+      let zoom = canvas.getZoom();
+      zoom *= 0.999 ** delta;
+      
+      if (zoom > 5) zoom = 5;
+      if (zoom < 0.1) zoom = 0.1;
+      
+      const point = new fabric.Point(e.offsetX, e.offsetY);
+      canvas.zoomToPoint(point, zoom);
+      
+      // 更新状态
+      updateCanvasState({ zoom });
+    };
+
+    // 鼠标平移
+    const handleMouseDown = (opt: fabric.IEvent) => {
+      const evt = opt.e as MouseEvent;
+      if (isPanning) {
+        (canvas as any)._isDragging = true;
+        canvas.selection = false;
+        lastPosX = evt.clientX;
+        lastPosY = evt.clientY;
+        canvas.defaultCursor = 'grabbing';
+        canvas.hoverCursor = 'grabbing';
+      }
+    };
+
+    const handleMouseMove = (opt: fabric.IEvent) => {
+      const evt = opt.e as MouseEvent;
+      if ((canvas as any)._isDragging && isPanning) {
+        const vpt = canvas.viewportTransform;
+        if (vpt) {
+          vpt[4] += evt.clientX - lastPosX;
+          vpt[5] += evt.clientY - lastPosY;
+          canvas.requestRenderAll();
+          lastPosX = evt.clientX;
+          lastPosY = evt.clientY;
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (isPanning) {
+        (canvas as any)._isDragging = false;
+        canvas.selection = true;
+        canvas.defaultCursor = 'grab';
+        canvas.hoverCursor = 'grab';
+      }
+    };
+
+    // 添加事件监听器
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+    document.addEventListener('keyup', handleKeyUp);
+    
+    const canvasElement = canvas.getElement();
+    if (canvasElement) {
+      canvasElement.addEventListener('wheel', handleWheel);
+    }
+    
+    canvas.on('mouse:down', handleMouseDown);
+    canvas.on('mouse:move', handleMouseMove);
+    canvas.on('mouse:up', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+      
+      // 安全地移除canvas事件监听器
+      if (canvas) {
+        try {
+          const canvasElement = canvas.getElement();
+          if (canvasElement) {
+            canvasElement.removeEventListener('wheel', handleWheel);
+          }
+          canvas.off('mouse:down', handleMouseDown);
+          canvas.off('mouse:move', handleMouseMove);
+          canvas.off('mouse:up', handleMouseUp);
+        } catch (error) {
+          console.warn('Error removing canvas event listeners:', error);
+        }
+      }
+    };
+  }, [updateCanvasState]);
 
   return (
     <div 
@@ -208,12 +386,14 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
     >
       {/* 画布容器 */}
       <div
+        ref={setCanvasContainerRef}
         style={{
-          padding: '20px',
-          backgroundColor: '#ffffff',
-          borderRadius: '12px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
-          border: '1px solid #e0e0e0'
+          padding: '0px', // 初始状态为无边框
+          backgroundColor: 'transparent',
+          borderRadius: '0px',
+          boxShadow: 'none',
+          border: 'none',
+          position: 'relative'
         }}
       >
         <canvas 
@@ -223,334 +403,6 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
             borderRadius: '8px',
           }}
         />
-      </div>
-      
-      {/* 快速工具栏 */}
-      <div 
-        style={{
-          position: 'absolute',
-          top: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          padding: '8px 16px',
-          borderRadius: '24px',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-          display: 'flex',
-          gap: '12px',
-          alignItems: 'center'
-        }}
-      >
-        <button 
-          style={{
-            padding: '6px 12px',
-            backgroundColor: '#1890ff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '12px',
-            cursor: 'pointer'
-          }}
-          onClick={() => {
-            // 添加文本功能
-            if (fabricCanvasRef.current) {
-              const text = new fabric.Text('新文本', {
-                left: Math.random() * (canvasSize.width - 200) + 100,
-                top: Math.random() * (canvasSize.height - 100) + 50,
-                fontSize: 24,
-                fill: '#333333'
-              });
-              fabricCanvasRef.current.add(text);
-              fabricCanvasRef.current.renderAll();
-            }
-          }}
-        >
-          📝 文本
-        </button>
-        
-        <label 
-          style={{
-            padding: '6px 12px',
-            backgroundColor: '#13c2c2',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '12px',
-            cursor: 'pointer',
-            display: 'inline-block'
-          }}
-        >
-          🖼️ 图片
-          <input
-            type="file"
-            accept="image/*"
-            style={{ display: 'none' }}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file && fabricCanvasRef.current) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                  const imgUrl = event.target?.result as string;
-                  fabric.Image.fromURL(imgUrl, (img) => {
-                    // 调整图片大小以适应画布
-                    const maxWidth = canvasSize.width * 0.4;
-                    const maxHeight = canvasSize.height * 0.4;
-                    
-                    if (img.width! > maxWidth || img.height! > maxHeight) {
-                      const scale = Math.min(maxWidth / img.width!, maxHeight / img.height!);
-                      img.scale(scale);
-                    }
-                    
-                    img.set({
-                      left: Math.random() * (canvasSize.width - img.getScaledWidth()) + 50,
-                      top: Math.random() * (canvasSize.height - img.getScaledHeight()) + 50,
-                    });
-                    
-                    fabricCanvasRef.current!.add(img);
-                    fabricCanvasRef.current!.renderAll();
-                  });
-                };
-                reader.readAsDataURL(file);
-              }
-              // 重置文件输入
-              e.target.value = '';
-            }}
-          />
-        </label>
-        
-        <button 
-          style={{
-            padding: '6px 12px',
-            backgroundColor: '#52c41a',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '12px',
-            cursor: 'pointer'
-          }}
-          onClick={() => {
-            // 添加矩形功能
-            if (fabricCanvasRef.current) {
-              const rect = new fabric.Rect({
-                left: Math.random() * (canvasSize.width - 200) + 100,
-                top: Math.random() * (canvasSize.height - 200) + 100,
-                width: 100,
-                height: 80,
-                fill: '#1890ff',
-                rx: 8,
-                ry: 8
-              });
-              fabricCanvasRef.current.add(rect);
-              fabricCanvasRef.current.renderAll();
-            }
-          }}
-        >
-          ⬜ 矩形
-        </button>
-        
-        <button 
-          style={{
-            padding: '6px 12px',
-            backgroundColor: '#eb2f96',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '12px',
-            cursor: 'pointer'
-          }}
-          onClick={() => {
-            // 添加圆形功能
-            if (fabricCanvasRef.current) {
-              const circle = new fabric.Circle({
-                left: Math.random() * (canvasSize.width - 200) + 100,
-                top: Math.random() * (canvasSize.height - 200) + 100,
-                radius: 50,
-                fill: '#eb2f96'
-              });
-              fabricCanvasRef.current.add(circle);
-              fabricCanvasRef.current.renderAll();
-            }
-          }}
-        >
-          ⭕ 圆形
-        </button>
-        
-        <button 
-          style={{
-            padding: '6px 12px',
-            backgroundColor: '#f5222d',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '12px',
-            cursor: 'pointer'
-          }}
-          onClick={() => {
-            // 添加三角形功能
-            if (fabricCanvasRef.current) {
-              const triangle = new fabric.Triangle({
-                left: Math.random() * (canvasSize.width - 200) + 100,
-                top: Math.random() * (canvasSize.height - 200) + 100,
-                width: 80,
-                height: 80,
-                fill: '#f5222d'
-              });
-              fabricCanvasRef.current.add(triangle);
-              fabricCanvasRef.current.renderAll();
-            }
-          }}
-        >
-          🔺 三角形
-        </button>
-        
-        <CanvasConfigButton
-          currentWidth={canvasSize.width}
-          currentHeight={canvasSize.height}
-          onSizeChange={handleSizeChange}
-        />
-        
-        {/* 颜色选择器 */}
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-          {['#1890ff', '#52c41a', '#fa8c16', '#f759ab', '#722ed1', '#ff4d4f'].map((color) => (
-            <button
-              key={color}
-              style={{
-                width: '24px',
-                height: '24px',
-                backgroundColor: color,
-                border: '2px solid white',
-                borderRadius: '50%',
-                cursor: 'pointer',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-              }}
-              onClick={() => {
-                // 改变选中对象的颜色
-                if (fabricCanvasRef.current) {
-                  const activeObject = fabricCanvasRef.current.getActiveObject();
-                  if (activeObject) {
-                    if (activeObject.type === 'text') {
-                      activeObject.set('fill', color);
-                    } else {
-                      activeObject.set('fill', color);
-                    }
-                    fabricCanvasRef.current.renderAll();
-                  }
-                }
-              }}
-              title={`设置颜色: ${color}`}
-            />
-          ))}
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span style={{ fontSize: '12px', color: '#666' }}>背景:</span>
-          <input
-            type="color"
-            defaultValue="#ffffff"
-            style={{
-              width: '32px',
-              height: '24px',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-            onChange={(e) => {
-              if (fabricCanvasRef.current) {
-                fabricCanvasRef.current.setBackgroundColor(e.target.value, fabricCanvasRef.current.renderAll.bind(fabricCanvasRef.current));
-              }
-            }}
-          />
-        </div>
-        
-        <button 
-          style={{
-            padding: '6px 12px',
-            backgroundColor: '#f759ab',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '12px',
-            cursor: 'pointer'
-          }}
-          onClick={() => {
-            // 添加圆形功能
-            if (fabricCanvasRef.current) {
-              const circle = new fabric.Circle({
-                left: Math.random() * (canvasSize.width - 100) + 50,
-                top: Math.random() * (canvasSize.height - 100) + 50,
-                radius: 50,
-                fill: '#f759ab',
-                stroke: '#ffffff',
-                strokeWidth: 2
-              });
-              fabricCanvasRef.current.add(circle);
-              fabricCanvasRef.current.renderAll();
-            }
-          }}
-        >
-          ⭕ 添加圆形
-        </button>
-        
-        <button 
-          style={{
-            padding: '6px 12px',
-            backgroundColor: '#fa8c16',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '12px',
-            cursor: 'pointer'
-          }}
-          onClick={() => {
-            // 清空画布功能
-            if (fabricCanvasRef.current) {
-              if (window.confirm('确定要清空画布吗？此操作不可撤销。')) {
-                fabricCanvasRef.current.clear();
-                fabricCanvasRef.current.renderAll();
-              }
-            }
-          }}
-        >
-          🗑️ 清空
-        </button>
-      </div>
-
-      {/* 画布信息 */}
-      <div 
-        style={{
-          position: 'absolute',
-          bottom: '20px',
-          left: '20px',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          color: '#666',
-          padding: '8px 12px',
-          borderRadius: '6px',
-          fontSize: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          maxWidth: '300px'
-        }}
-      >
-        <div>画布: {canvasSize.width} × {canvasSize.height} | 缩放: 100%</div>
-        <div style={{ fontSize: '10px', marginTop: '4px', opacity: 0.8 }}>
-          快捷键: Delete删除 | Ctrl+D复制 | 方向键移动 | 右键删除
-        </div>
-      </div>
-      
-      {/* 右上角帮助提示 */}
-      <div 
-        style={{
-          position: 'absolute',
-          top: '20px',
-          right: '20px',
-          backgroundColor: 'rgba(76, 175, 80, 0.9)',
-          color: 'white',
-          padding: '6px 10px',
-          borderRadius: '4px',
-          fontSize: '12px',
-          fontWeight: 'bold'
-        }}
-      >
-        🎨 海报编辑器 v1.0
       </div>
     </div>
   );

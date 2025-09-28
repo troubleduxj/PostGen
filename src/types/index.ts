@@ -148,7 +148,7 @@ export interface Template {
   thumbnail: string;
   width: number;
   height: number;
-  objects: SerializedObject[];
+  objects: SerializedObject;
   tags: string[];
   createdAt: string;
   updatedAt: string;

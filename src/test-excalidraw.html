@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Excalidraw Library Test</title>
+</head>
+<body>
+    <h1>Excalidraw Library Test</h1>
+    <div id="test-results"></div>
+    
+    <script type="module">
+        import { getLocalLibrary } from './data/excalidrawLibraries.ts';
+        
+        const testResults = document.getElementById('test-results');
+        
+        // 测试所有库
+        const libraries = ['basic-shapes', 'arrows', 'flowchart', 'ui-elements', 'icons', 'illustrations'];
+        
+        libraries.forEach(libName => {
+            const lib = getLocalLibrary(libName);
+            const result = document.createElement('div');
+            result.innerHTML = `
+                <h3>${libName}</h3>
+                <p>Status: ${lib ? 'Found' : 'Not Found'}</p>
+                ${lib ? `<p>Items: ${lib.libraryItems.length}</p>` : ''}
+            `;
+            testResults.appendChild(result);
+        });
+    </script>
+</body>
+</html>

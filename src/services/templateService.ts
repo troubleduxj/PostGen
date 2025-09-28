@@ -370,7 +370,11 @@ export class TemplateService {
       }),
       width: canvas.getWidth(),
       height: canvas.getHeight(),
-      objects: canvasData,
+      objects: {
+        type: 'canvas',
+        version: canvasData.version,
+        objects: canvasData.objects
+      },
       tags: templateInfo.tags,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

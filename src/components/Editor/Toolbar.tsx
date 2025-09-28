@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     ZoomIn,
     ZoomOut,
+    Maximize2,
     Download,
     Save,
     FolderOpen,
@@ -25,8 +26,10 @@ interface ToolbarProps {
 
 export const Toolbar: React.FC<ToolbarProps> = ({ className = '' }) => {
     const {
+        canvas,
         zoomIn,
         zoomOut,
+        zoomToFit,
         canvasState,
         updateCanvasState,
         activePanel,
@@ -64,6 +67,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({ className = '' }) => {
     // 切换网格显示
     const toggleGrid = () => {
         updateCanvasState({ gridVisible: !canvasState.gridVisible });
+    };
+
+    // 适应屏幕 - 使用store中的方法
+    const fitToScreen = () => {
+        zoomToFit();
     };
 
     // 打开导出弹窗
@@ -150,7 +158,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ className = '' }) => {
                 <button
                     onClick={zoomOut}
                     className="toolbar-btn"
-                    title="缩小"
+                    title="缩小 (Ctrl + -)"
                 >
                     <ZoomOut size={18} />
                 </button>
@@ -160,9 +168,16 @@ export const Toolbar: React.FC<ToolbarProps> = ({ className = '' }) => {
                 <button
                     onClick={zoomIn}
                     className="toolbar-btn"
-                    title="放大"
+                    title="放大 (Ctrl + +)"
                 >
                     <ZoomIn size={18} />
+                </button>
+                <button
+                    onClick={fitToScreen}
+                    className="toolbar-btn"
+                    title="适应屏幕 (Ctrl + 0)"
+                >
+                    <Maximize2 size={18} />
                 </button>
             </div>
 

@@ -19,6 +19,7 @@ interface ExtendedEditorState extends EditorState {
     snapToGrid: boolean;
     showRulers: boolean;
     showGuides: boolean;
+    showCanvasBorder: boolean; // 显示画布边框
   };
   
   // 最近使用的项目
@@ -108,6 +109,7 @@ const defaultPreferences = {
   snapToGrid: false,
   showRulers: false,
   showGuides: true,
+  showCanvasBorder: false, // 默认关闭画布边框，提供更简洁的初始体验
 };
 
 export const useEditorStore = create<EditorStore>()(
@@ -342,6 +344,28 @@ export const useEditorStore = create<EditorStore>()(
         const { canvas, canvasState } = get();
         if (canvas) {
           const newZoom = Math.min(canvasState.zoom * 1.2, 5);
+          console.log('Zooming in from', canvasState.zoom, 'to', newZoom);
+          
+          // 找到白色画布容器（包含背景、边框、阴影的外层div）
+          const canvasElement = canvas.getElement();
+          const fabricContainer = canvasElement.parentElement; // fabric.js的canvas-container
+          const whiteCanvasContainer = fabricContainer?.parentElement; // 白色画布容器
+          
+          console.log('Canvas element:', canvasElement);
+          console.log('Fabric container:', fabricContainer);
+          console.log('White canvas container:', whiteCanvasContainer);
+          
+          if (whiteCanvasContainer) {
+            const transformValue = `scale(${newZoom})`;
+            console.log('Applying transform to white container:', transformValue);
+            whiteCanvasContainer.style.transform = transformValue;
+            whiteCanvasContainer.style.transformOrigin = 'center center';
+            whiteCanvasContainer.style.transition = 'transform 0.2s ease';
+            console.log('Applied transform, current style:', whiteCanvasContainer.style.transform);
+          } else {
+            console.warn('White canvas container not found!');
+          }
+          
           get().updateCanvasState({ zoom: newZoom });
         }
       },
@@ -350,6 +374,28 @@ export const useEditorStore = create<EditorStore>()(
         const { canvas, canvasState } = get();
         if (canvas) {
           const newZoom = Math.max(canvasState.zoom / 1.2, 0.1);
+          console.log('Zooming out from', canvasState.zoom, 'to', newZoom);
+          
+          // 找到白色画布容器（包含背景、边框、阴影的外层div）
+          const canvasElement = canvas.getElement();
+          const fabricContainer = canvasElement.parentElement; // fabric.js的canvas-container
+          const whiteCanvasContainer = fabricContainer?.parentElement; // 白色画布容器
+          
+          console.log('Canvas element:', canvasElement);
+          console.log('Fabric container:', fabricContainer);
+          console.log('White canvas container:', whiteCanvasContainer);
+          
+          if (whiteCanvasContainer) {
+            const transformValue = `scale(${newZoom})`;
+            console.log('Applying transform to white container:', transformValue);
+            whiteCanvasContainer.style.transform = transformValue;
+            whiteCanvasContainer.style.transformOrigin = 'center center';
+            whiteCanvasContainer.style.transition = 'transform 0.2s ease';
+            console.log('Applied transform, current style:', whiteCanvasContainer.style.transform);
+          } else {
+            console.warn('White canvas container not found!');
+          }
+          
           get().updateCanvasState({ zoom: newZoom });
         }
       },
@@ -357,24 +403,79 @@ export const useEditorStore = create<EditorStore>()(
       zoomToFit: () => {
         const { canvas } = get();
         if (canvas) {
-          const container = canvas.getElement().parentElement;
-          if (container) {
-            const containerWidth = container.clientWidth - 40;
-            const containerHeight = container.clientHeight - 40;
-            const canvasWidth = canvas.getWidth();
-            const canvasHeight = canvas.getHeight();
+          // 找到白色画布容器和工作区容器
+          const canvasElement = canvas.getElement();
+          const fabricContainer = canvasElement.parentElement; // fabric.js的canvas-container
+          const whiteCanvasContainer = fabricContainer?.parentElement; // 白色画布容器
+          const workspaceContainer = canvasElement.closest('.poster-workspace');
+          
+          console.log('Fit to screen - White canvas container:', whiteCanvasContainer);
+          console.log('Fit to screen - Workspace container:', workspaceContainer);
+          
+          if (workspaceContainer && whiteCanvasContainer) {
+            // 重置transform以获取原始尺寸
+            whiteCanvasContainer.style.transform = 'scale(1)';
             
-            const scaleX = containerWidth / canvasWidth;
-            const scaleY = containerHeight / canvasHeight;
-            const scale = Math.min(scaleX, scaleY);
+            // 获取实际的可视区域尺寸
+            const workspaceRect = workspaceContainer.getBoundingClientRect();
+            
+            // 考虑到页面布局，计算真正可用的空间
+            // 使用更保守的边距确保画布不会贴边
+            const availableWidth = workspaceRect.width - 100;  // 左右各50px边距
+            const availableHeight = workspaceRect.height - 80; // 上下各40px边距
+            
+            // 获取白色画布容器的原始尺寸
+            const containerWidth = whiteCanvasContainer.offsetWidth;
+            const containerHeight = whiteCanvasContainer.offsetHeight;
+            
+            console.log('Workspace rect:', workspaceRect);
+            console.log('Available space:', availableWidth, 'x', availableHeight);
+            console.log('Container original size:', containerWidth, 'x', containerHeight);
+            
+            // 计算缩放比例
+            const scaleX = availableWidth / containerWidth;
+            const scaleY = availableHeight / containerHeight;
+            const scale = Math.min(scaleX, scaleY, 1); // 不超过100%
+            
+            console.log('Scale ratios - X:', scaleX, 'Y:', scaleY);
+            console.log('Final fit scale:', scale);
+            
+            // 应用缩放并确保居中
+            whiteCanvasContainer.style.transform = `scale(${scale})`;
+            whiteCanvasContainer.style.transformOrigin = 'center center';
+            whiteCanvasContainer.style.transition = 'transform 0.3s ease';
+            
+            // 确保父容器的居中样式正确
+            const workspaceElement = workspaceContainer as HTMLElement;
+            workspaceElement.style.display = 'flex';
+            workspaceElement.style.alignItems = 'center';
+            workspaceElement.style.justifyContent = 'center';
             
             get().updateCanvasState({ zoom: scale });
+          } else {
+            console.warn('Could not find containers for fit to screen');
           }
         }
       },
 
       resetZoom: () => {
-        get().updateCanvasState({ zoom: 1 });
+        const { canvas } = get();
+        if (canvas) {
+          const scale = 1;
+          
+          // 找到白色画布容器并重置CSS transform
+          const canvasElement = canvas.getElement();
+          const fabricContainer = canvasElement.parentElement; // fabric.js的canvas-container
+          const whiteCanvasContainer = fabricContainer?.parentElement; // 白色画布容器
+          
+          if (whiteCanvasContainer) {
+            whiteCanvasContainer.style.transform = `scale(${scale})`;
+            whiteCanvasContainer.style.transformOrigin = 'center center';
+            whiteCanvasContainer.style.transition = 'transform 0.2s ease';
+          }
+          
+          get().updateCanvasState({ zoom: scale });
+        }
       },
 
       // 状态管理

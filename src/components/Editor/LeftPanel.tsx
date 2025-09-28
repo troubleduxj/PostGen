@@ -10,13 +10,18 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronUp,
-  Paintbrush
+  Paintbrush,
+  Package,
+  LayoutTemplate
 } from 'lucide-react';
 import { fabric } from 'fabric';
 import { PanelType } from '@/types';
 import { useEditorStore } from '@/stores/editorStore';
 import { LayerPanel } from './LayerPanel';
+import { TemplateTooltip } from '../UI/TemplateTooltip';
+import { templates, templateCategories } from '../../data/templates';
 import { AssetPanel } from './AssetPanel';
+import { StandardAssetPanel } from './StandardAssetPanel';
 import { HistoryPanel } from './HistoryPanel';
 import { textCategories, getTextEffectsByCategory, TextEffect } from '@/data/textEffects';
 import { drawingCategories, getDrawingToolsByCategory, DrawingTool, createFabricObject } from '@/data/drawingTools';
@@ -36,8 +41,8 @@ const panelTabs: PanelTab[] = [
   { id: 'text', icon: Type, label: '文本' },
   { id: 'draw', icon: Paintbrush, label: '绘制' },
   { id: 'images', icon: ImageIcon, label: '图片' },
-  { id: 'assets', icon: Image, label: '素材' },
-  { id: 'templates', icon: Layout, label: '模板' },
+  { id: 'assets', icon: Package, label: '素材' },
+  { id: 'templates', icon: LayoutTemplate, label: '模板' },
   { id: 'history', icon: History, label: '历史' },
 ];
 
@@ -139,7 +144,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ className = '' }) => {
               {activePanel === 'text' && <TextPanel />}
               {activePanel === 'draw' && <DrawPanel />}
               {activePanel === 'images' && <ImagesPanel />}
-              {activePanel === 'assets' && <AssetPanel />}
+              {activePanel === 'assets' && <StandardAssetPanel />}
               {activePanel === 'templates' && <TemplatesPanel />}
               {activePanel === 'history' && <HistoryPanel />}
             </div>
@@ -573,40 +578,271 @@ const TemplatesPanel: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredTemplates, setFilteredTemplates] = useState<any[]>([]);
 
-  // 模板数据
-  const mockTemplates = React.useMemo(() => [
-    {
-      id: 'template-1',
-      name: '简约商务海报',
-      thumbnail: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjI4MCIgdmlld0JveD0iMCAwIDIwMCAyODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjgwIiBmaWxsPSIjRjhGQUZDIi8+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjMzk4MkY2Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjE2IiBmb250LXdlaWdodD0iYm9sZCI+5ZWG5Yqh5rW35oqlPC90ZXh0Pgo8dGV4dCB4PSIyMCIgeT0iMTQwIiBmaWxsPSIjMzc0MTUxIiBmb250LXNpemU9IjEyIj7kuJvliqHlhoXlrrk8L3RleHQ+CjxyZWN0IHg9IjE1MCIgeT0iMTYwIiB3aWR0aD0iMzAiIGhlaWdodD0iMzAiIGZpbGw9IiMzOTgyRjYiIG9wYWNpdHk9IjAuMyIvPgo8L3N2Zz4=',
-      category: 'business',
-      width: 800,
-      height: 1200
-    },
-    {
-      id: 'template-2',
-      name: 'Instagram 故事',
-      thumbnail: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjI4MCIgdmlld0JveD0iMCAwIDIwMCAyODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxkZWZzPgo8bGluZWFyR3JhZGllbnQgaWQ9ImdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgo8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZmY5YTllO3N0b3Atb3BhY2l0eToxIiAvPgo8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNmZWNmZWY7c3RvcC1vcGFjaXR5OjEiIC8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyODAiIGZpbGw9InVybCgjZ3JhZCkiLz4KPHR5ZXh0IHg9IjEwMCIgeT0iMTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIyMCIgZm9udC13ZWlnaHQ9ImJvbGQiPuS7iuaXpeWIhuS6qzwvdGV4dD4KPGNpcmNsZSBjeD0iNTAiIGN5PSIyMDAiIHI9IjE1IiBmaWxsPSJ3aGl0ZSIgb3BhY2l0eT0iMC4zIi8+CjxjaXJjbGUgY3g9IjE1MCIgY3k9IjIyMCIgcj0iMTAiIGZpbGw9IndoaXRlIiBvcGFjaXR5PSIwLjIiLz4KPC9zdmc+',
-      category: 'social',
-      width: 1080,
-      height: 1920
-    },
-    {
-      id: 'template-3',
-      name: '音乐节海报',
-      thumbnail: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjI4MCIgdmlld0JveD0iMCAwIDIwMCAyODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjgwIiBmaWxsPSIjMUExQTFBIi8+Cjx0ZXh0IHg9IjEwMCIgeT0iNjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNGRjZCNkIiIGZvbnQtc2l6ZT0iMTgiIGZvbnQtd2VpZ2h0PSJib2xkIj5NVVNJQyBGRVNUPC90ZXh0Pgo8dGV4dCB4PSIxMDAiIHk9IjkwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxMiI+MjAyNC4wNy4xNTwvdGV4dD4KPGxpbmUgeDE9IjUwIiB5MT0iMTIwIiB4Mj0iMTUwIiB5Mj0iMTIwIiBzdHJva2U9IiNGRjZCNkIiIHN0cm9rZS13aWR0aD0iMiIvPgo8dGV4dCB4PSIxMDAiIHk9IjE2MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTAiPueJuemCgOiJuuS6ujwvdGV4dD4KPC9zdmc+',
-      category: 'event',
-      width: 800,
-      height: 1200
+  // 安全的Base64编码函数，支持中文字符
+  const safeBase64Encode = (str: string) => {
+    try {
+      return btoa(unescape(encodeURIComponent(str)));
+    } catch (e) {
+      console.error('Base64 encoding failed:', e);
+      return '';
     }
-  ], []);
+  };
 
-  const mockCategories = React.useMemo(() => [
-    { id: 'all', name: '全部', icon: '📋', count: 3 },
-    { id: 'business', name: '商务', icon: '💼', count: 1 },
-    { id: 'social', name: '社交', icon: '📱', count: 1 },
-    { id: 'event', name: '活动', icon: '🎉', count: 1 }
-  ], []);
+  // 基于Canvas生成高质量预览图
+  const generateCanvasThumbnail = (template: any): Promise<string> => {
+    return new Promise((resolve) => {
+      const aspectRatio = template.width / template.height;
+      const thumbWidth = 400; // 提高分辨率
+      const thumbHeight = Math.round(thumbWidth / aspectRatio);
+      
+      // 创建高分辨率临时canvas用于生成预览
+      const highResWidth = thumbWidth;
+      const highResHeight = thumbHeight;
+      
+      const tempCanvas = new fabric.Canvas(null, {
+        width: highResWidth,
+        height: highResHeight,
+        backgroundColor: '#ffffff',
+        enableRetinaScaling: true // 启用高DPI支持
+      });
+      
+      const templateObjects = template.objects?.objects || [];
+      const scaleX = highResWidth / template.width;
+      const scaleY = highResHeight / template.height;
+      
+      const fabricObjects: fabric.Object[] = [];
+      
+      templateObjects.forEach((objData: any) => {
+        try {
+          let fabricObj: fabric.Object | null = null;
+          
+          switch (objData.type) {
+            case 'rect':
+              fabricObj = new fabric.Rect({
+                left: (objData.left || 0) * scaleX,
+                top: (objData.top || 0) * scaleY,
+                width: (objData.width || 100) * scaleX,
+                height: (objData.height || 100) * scaleY,
+                fill: objData.fill || '#000000',
+                stroke: objData.stroke || undefined,
+                strokeWidth: (objData.strokeWidth || 0) * Math.min(scaleX, scaleY),
+                rx: (objData.rx || 0) * scaleX,
+                ry: (objData.ry || 0) * scaleY,
+                selectable: false,
+                evented: false
+              });
+              break;
+              
+            case 'circle':
+              fabricObj = new fabric.Circle({
+                left: (objData.left || 0) * scaleX,
+                top: (objData.top || 0) * scaleY,
+                radius: (objData.radius || 50) * Math.min(scaleX, scaleY),
+                fill: objData.fill || '#000000',
+                stroke: objData.stroke || undefined,
+                strokeWidth: (objData.strokeWidth || 0) * Math.min(scaleX, scaleY),
+                opacity: objData.opacity || 1,
+                selectable: false,
+                evented: false
+              });
+              break;
+              
+            case 'text':
+              const text = objData.text || 'Text';
+              const fontSize = Math.max(6, (objData.fontSize || 20) * Math.min(scaleX, scaleY));
+              
+              fabricObj = new fabric.Text(text, {
+                left: (objData.left || 0) * scaleX,
+                top: (objData.top || 0) * scaleY,
+                fontSize: fontSize,
+                fontFamily: objData.fontFamily || 'Arial',
+                fontWeight: objData.fontWeight || 'normal',
+                fill: objData.fill || '#000000',
+                textAlign: objData.textAlign || 'left',
+                lineHeight: objData.lineHeight || 1.2,
+                charSpacing: (objData.charSpacing || 0) * scaleX,
+                originX: objData.originX || 'left',
+                originY: objData.originY || 'top',
+                selectable: false,
+                evented: false
+              });
+              break;
+              
+            case 'line':
+              fabricObj = new fabric.Line([
+                (objData.left || 0) + (objData.x1 || 0) * scaleX,
+                (objData.top || 0) + (objData.y1 || 0) * scaleY,
+                (objData.left || 0) + (objData.x2 || 100) * scaleX,
+                (objData.top || 0) + (objData.y2 || 0) * scaleY
+              ], {
+                stroke: objData.stroke || '#000000',
+                strokeWidth: (objData.strokeWidth || 1) * Math.min(scaleX, scaleY),
+                selectable: false,
+                evented: false
+              });
+              break;
+              
+            case 'triangle':
+              fabricObj = new fabric.Triangle({
+                left: (objData.left || 0) * scaleX,
+                top: (objData.top || 0) * scaleY,
+                width: (objData.width || 100) * scaleX,
+                height: (objData.height || 100) * scaleY,
+                fill: objData.fill || '#000000',
+                angle: objData.angle || 0,
+                selectable: false,
+                evented: false
+              });
+              break;
+          }
+          
+          if (fabricObj) {
+            fabricObjects.push(fabricObj);
+          }
+        } catch (error) {
+          console.warn('Error creating preview object:', objData.type, error);
+        }
+      });
+      
+      // 批量添加对象
+      if (fabricObjects.length > 0) {
+        fabricObjects.forEach(obj => tempCanvas.add(obj));
+        tempCanvas.renderAll();
+        
+        // 生成高质量预览图
+        setTimeout(() => {
+          const dataURL = tempCanvas.toDataURL({
+            format: 'png',
+            quality: 1.0, // 提高质量
+            multiplier: 1, // 使用1倍倍数，因为我们已经使用了高分辨率canvas
+            enableRetinaScaling: true
+          });
+          
+          // 清理临时canvas
+          tempCanvas.dispose();
+          resolve(dataURL);
+        }, 30); // 减少延迟
+      } else {
+        // 如果没有对象，生成默认预览
+        tempCanvas.dispose();
+        resolve(`data:image/svg+xml;base64,${safeBase64Encode(`
+          <svg width="${thumbWidth}" height="${thumbHeight}" viewBox="0 0 ${thumbWidth} ${thumbHeight}" xmlns="http://www.w3.org/2000/svg">
+            <rect width="${thumbWidth}" height="${thumbHeight}" fill="#f8fafc"/>
+            <rect x="20" y="20" width="${thumbWidth-40}" height="${thumbHeight-40}" fill="none" stroke="#e5e7eb" stroke-width="2" stroke-dasharray="5,5"/>
+            <text x="${thumbWidth/2}" y="${thumbHeight/2}" text-anchor="middle" fill="#6b7280" font-size="12">Template</text>
+          </svg>
+        `)}`);
+      }
+    });
+  };
+
+  // 模板预览图缓存
+  const [thumbnailCache, setThumbnailCache] = React.useState<Record<string, string>>({});
+  const [generatingThumbnails, setGeneratingThumbnails] = React.useState<Set<string>>(new Set());
+  
+  // 生成临时预览图
+  const getTemporaryThumbnail = (template: any) => {
+    const aspectRatio = template.width / template.height;
+    const thumbWidth = 200;
+    const thumbHeight = Math.round(thumbWidth / aspectRatio);
+    // 返回临时的简化预览图，基于模板的主要特征
+    const templateObjects = template.objects?.objects || [];
+    const bgColor = templateObjects.find((obj: any) => obj.type === 'rect' && obj.left === 0 && obj.top === 0)?.fill || '#ffffff';
+    return `data:image/svg+xml;base64,${safeBase64Encode(`
+      <svg width="${thumbWidth}" height="${thumbHeight}" viewBox="0 0 ${thumbWidth} ${thumbHeight}" xmlns="http://www.w3.org/2000/svg">
+        <rect width="${thumbWidth}" height="${thumbHeight}" fill="${bgColor}"/>
+        <rect x="10" y="10" width="${thumbWidth-20}" height="${thumbHeight-20}" fill="none" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+        <text x="${thumbWidth/2}" y="${thumbHeight/2}" text-anchor="middle" fill="#6b7280" font-size="10" font-family="Arial">${template.name}</text>
+        <text x="${thumbWidth/2}" y="${thumbHeight/2 + 15}" text-anchor="middle" fill="#9ca3af" font-size="8" font-family="Arial">Loading...</text>
+      </svg>
+    `)}`;
+  };
+  
+  // 生成模板预览图的函数
+  const generateThumbnail = (template: any) => {
+    // 如果已经有缓存的预览图，直接返回
+    if (thumbnailCache[template.id]) {
+      return thumbnailCache[template.id];
+    }
+    
+    // 如果正在生成中，返回临时预览图
+    if (generatingThumbnails.has(template.id)) {
+      return getTemporaryThumbnail(template);
+    }
+    
+    // 标记为生成中
+    setGeneratingThumbnails(prev => new Set([...prev, template.id]));
+    
+    // 异步生成高质量预览图
+    generateCanvasThumbnail(template).then(dataURL => {
+      setThumbnailCache(prev => ({
+        ...prev,
+        [template.id]: dataURL
+      }));
+      setGeneratingThumbnails(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(template.id);
+        return newSet;
+      });
+    }).catch(error => {
+      console.warn('Failed to generate canvas thumbnail:', error);
+      setGeneratingThumbnails(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(template.id);
+        return newSet;
+      });
+    });
+    
+    return getTemporaryThumbnail(template);
+  };
+
+  // 预加载前几个模板的预览图
+  React.useEffect(() => {
+    const preloadThumbnails = async () => {
+      // 预加载前6个模板的预览图
+      const templatesToPreload = templates.slice(0, 6);
+      for (const template of templatesToPreload) {
+        if (!thumbnailCache[template.id] && !generatingThumbnails.has(template.id)) {
+          generateThumbnail(template);
+          // 添加小延迟避免阻塞UI
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
+      }
+    };
+    preloadThumbnails();
+  }, []);
+
+  // 使用真实的模板数据
+  const mockTemplates = React.useMemo(() => templates.map(template => ({
+    id: template.id,
+    name: template.name,
+    description: template.description,
+    thumbnail: thumbnailCache[template.id] || generateThumbnail(template),
+    category: template.category,
+    tags: template.tags,
+    width: template.width,
+    height: template.height,
+    objects: template.objects.objects || []
+  })), [thumbnailCache, generatingThumbnails]);
+
+  const mockCategories = React.useMemo(() => {
+    const categoryCounts = templates.reduce((acc, template) => {
+      acc[template.category] = (acc[template.category] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const categories = [
+      { id: 'all', name: '全部', icon: '📋', count: templates.length },
+      ...templateCategories.map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        icon: cat.icon,
+        count: categoryCounts[cat.id] || 0
+      }))
+    ];
+
+    return categories;
+  }, []);
 
   const getTemplatesByCategory = React.useCallback((categoryId: string) => 
     categoryId === 'all' ? mockTemplates : mockTemplates.filter(t => t.category === categoryId),
@@ -633,42 +869,176 @@ const TemplatesPanel: React.FC = () => {
     setFilteredTemplates(filtered);
   }, [selectedCategory, searchQuery, mockTemplates, getTemplatesByCategory, searchTemplates]);
 
-  // 应用模板
+  // 应用模板到画布
   const applyTemplate = async (template: any) => {
-    if (!canvas) return;
-    
-    setLoading(true);
-    
+    if (!canvas) {
+      console.warn('Canvas not available');
+      return;
+    }
+
     try {
+      setLoading(true);
+      console.log('Applying template:', template.name);
+      
       // 清空画布
       canvas.clear();
       
       // 设置画布尺寸
-      updateCanvasState({
-        width: template.width,
-        height: template.height
+      canvas.setDimensions({
+        width: template.width || 800,
+        height: template.height || 600
       });
       
-      // 这里应该加载模板的实际对象数据
-      // 暂时添加一些示例对象
-      const text = new fabric.Text(template.name, {
-        left: template.width / 2,
-        top: 100,
-        fontSize: 32,
-        fontFamily: 'Arial',
-        fontWeight: 'bold',
-        fill: '#333333',
-        textAlign: 'center',
-        originX: 'center',
-        originY: 'center'
-      });
+      const templateObjects = template.objects || [];
       
-      canvas.add(text);
-      canvas.renderAll();
+      // 使用Fabric.js的原生JSON加载功能，性能更好
+      try {
+        const templateData = {
+          version: '5.3.0',
+          objects: templateObjects
+        };
+        
+        // 使用loadFromJSON进行高效加载
+        canvas.loadFromJSON(templateData, () => {
+          console.log('Template loaded successfully via JSON');
+          canvas.renderAll();
+          setLoading(false);
+        }, (o: any, object: fabric.Object) => {
+          // 确保对象可选择和可编辑
+          if (object) {
+            object.set({
+              selectable: true,
+              evented: true
+            });
+          }
+        });
+        
+        return; // 使用JSON加载，直接返回
+      } catch (jsonError) {
+        console.warn('JSON loading failed, falling back to manual creation:', jsonError);
+      }
+      
+      // 备用方案：手动创建对象
+      const fabricObjects = [];
+      
+      for (const objData of templateObjects) {
+        try {
+          let fabricObj = null;
+          
+          switch (objData.type) {
+            case 'rect':
+              fabricObj = new fabric.Rect({
+                left: objData.left || 0,
+                top: objData.top || 0,
+                width: objData.width || 100,
+                height: objData.height || 100,
+                fill: objData.fill || '#000000',
+                stroke: objData.stroke || null,
+                strokeWidth: objData.strokeWidth || 0,
+                rx: objData.rx || 0,
+                ry: objData.ry || 0,
+                opacity: objData.opacity || 1,
+                selectable: objData.selectable !== false,
+                evented: objData.evented !== false
+              });
+              break;
+              
+            case 'circle':
+              fabricObj = new fabric.Circle({
+                left: objData.left || 0,
+                top: objData.top || 0,
+                radius: objData.radius || 50,
+                fill: objData.fill || '#000000',
+                stroke: objData.stroke || null,
+                strokeWidth: objData.strokeWidth || 0,
+                opacity: objData.opacity || 1,
+                selectable: objData.selectable !== false,
+                evented: objData.evented !== false
+              });
+              break;
+              
+            case 'text':
+              fabricObj = new fabric.Text(objData.text || 'Text', {
+                left: objData.left || 0,
+                top: objData.top || 0,
+                fontSize: objData.fontSize || 20,
+                fontFamily: objData.fontFamily || 'Arial',
+                fontWeight: objData.fontWeight || 'normal',
+                fill: objData.fill || '#000000',
+                originX: objData.originX || 'left',
+                originY: objData.originY || 'top',
+                textAlign: objData.textAlign || 'left',
+                lineHeight: objData.lineHeight || 1.2,
+                charSpacing: objData.charSpacing || 0,
+                selectable: objData.selectable !== false,
+                evented: objData.evented !== false
+              });
+              break;
+              
+            case 'line':
+              fabricObj = new fabric.Line([
+                objData.x1 || 0,
+                objData.y1 || 0,
+                objData.x2 || 100,
+                objData.y2 || 0
+              ], {
+                left: objData.left || 0,
+                top: objData.top || 0,
+                stroke: objData.stroke || '#000000',
+                strokeWidth: objData.strokeWidth || 1,
+                selectable: objData.selectable !== false,
+                evented: objData.evented !== false
+              });
+              break;
+              
+            case 'triangle':
+              fabricObj = new fabric.Triangle({
+                left: objData.left || 0,
+                top: objData.top || 0,
+                width: objData.width || 100,
+                height: objData.height || 100,
+                fill: objData.fill || '#000000',
+                angle: objData.angle || 0,
+                selectable: objData.selectable !== false,
+                evented: objData.evented !== false
+              });
+              break;
+              
+            default:
+              console.warn('Unknown object type:', objData.type);
+              continue;
+          }
+          
+          if (fabricObj) {
+            fabricObjects.push(fabricObj);
+          }
+        } catch (objError) {
+          console.error('Error creating object:', objData.type, objError);
+        }
+      }
+      
+      // 使用更高效的批量添加方式
+      if (fabricObjects.length > 0) {
+        // 禁用渲染以提高性能
+        canvas.renderOnAddRemove = false;
+        
+        // 使用批量添加提高性能
+        canvas.add(...fabricObjects);
+        
+        // 重新启用渲染并执行一次渲染
+        canvas.renderOnAddRemove = true;
+        canvas.renderAll(); // 使用同步渲染确保立即显示
+      } else {
+        // 重新启用渲染
+        canvas.renderOnAddRemove = true;
+      }
+      
+      console.log('Template applied successfully, total objects:', canvas.getObjects().length);
       
     } catch (error) {
       console.error('Failed to apply template:', error);
     } finally {
+      // 隐藏加载状态
       setLoading(false);
     }
   };
@@ -710,23 +1080,51 @@ const TemplatesPanel: React.FC = () => {
         <div className="p-4">
           <div className="grid grid-cols-2 gap-3">
             {filteredTemplates.map((template) => (
-              <div
+              <TemplateTooltip
                 key={template.id}
-                className="group cursor-pointer"
-                onClick={() => applyTemplate(template)}
+                template={template}
+                position="right"
               >
-                <div className="aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden mb-2 group-hover:shadow-md transition-shadow">
-                  <img
-                    src={template.thumbnail}
-                    alt={template.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
+                <div
+                  className="group cursor-pointer"
+                  onClick={() => {
+                    console.log('Template card clicked:', template.name);
+                    applyTemplate(template);
+                  }}
+                >
+                  <div className="aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden mb-2 group-hover:shadow-md transition-shadow">
+                    {template.thumbnail ? (
+                      <img
+                        src={template.thumbnail}
+                        alt={template.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                        loading="lazy"
+                        style={{ imageRendering: 'crisp-edges' }}
+                        onError={(e) => {
+                          // 如果图片加载失败，显示默认图标
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          const parent = (e.target as HTMLElement).parentElement;
+                          if (parent) {
+                            parent.innerHTML = `
+                              <div class="w-full h-full flex items-center justify-center text-gray-400 bg-gradient-to-br from-blue-50 to-purple-50">
+                                <span class="text-3xl">📄</span>
+                              </div>
+                            `;
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gradient-to-br from-blue-50 to-purple-50">
+                        <span className="text-3xl">📄</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-xs">
+                    <div className="font-medium text-gray-900 truncate">{template.name}</div>
+                    <div className="text-gray-500">{template.width} × {template.height}</div>
+                  </div>
                 </div>
-                <div className="text-xs">
-                  <div className="font-medium text-gray-900 truncate">{template.name}</div>
-                  <div className="text-gray-500">{template.width} × {template.height}</div>
-                </div>
-              </div>
+              </TemplateTooltip>
             ))}
           </div>
           

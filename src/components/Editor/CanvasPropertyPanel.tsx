@@ -16,7 +16,7 @@ interface CanvasPropertyPanelProps {
 }
 
 export const CanvasPropertyPanel: React.FC<CanvasPropertyPanelProps> = ({ className = '' }) => {
-  const { canvas, canvasState, updateCanvasState } = useEditorStore();
+  const { canvas, canvasState, updateCanvasState, preferences, updatePreferences } = useEditorStore();
   const [localState, setLocalState] = useState({
     width: canvasState.width,
     height: canvasState.height,
@@ -281,6 +281,28 @@ export const CanvasPropertyPanel: React.FC<CanvasPropertyPanelProps> = ({ classN
             />
             <div className="text-xs text-gray-500 text-center">{localState.gridSize}px</div>
           </div>
+        </div>
+      </div>
+
+      {/* 显示设置 */}
+      <div className="property-group">
+        <h3 className="property-label flex items-center">
+          <Eye size={16} className="mr-2" />
+          显示设置
+        </h3>
+        <div className="space-y-3">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={preferences?.showCanvasBorder ?? false}
+              onChange={(e) => updatePreferences({ showCanvasBorder: e.target.checked })}
+              className="mr-2"
+            />
+            <span className="text-sm">显示画布边框</span>
+          </label>
+          <p className="text-xs text-gray-500">
+            显示画布周围的白色边框和阴影效果
+          </p>
         </div>
       </div>
 

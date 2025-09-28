@@ -2,7 +2,6 @@ import React from 'react';
 import { Toolbar } from './Toolbar';
 import { LeftPanel } from './LeftPanel';
 import { Canvas } from './Canvas';
-
 import { RightPanel } from './RightPanel';
 import { CanvasStatusBar } from './CanvasStatusBar';
 import { useEditorStore } from '@/stores/editorStore';
@@ -42,8 +41,8 @@ export const Editor: React.FC = () => {
         <LeftPanel />
         
         {/* 中央画布区域 */}
-        <div className="flex-1 flex flex-col">
-          <div className="flex-1 relative">
+        <div className="flex-1 flex flex-col" style={{ minHeight: 0 }}>
+          <div className="flex-1 relative" style={{ minHeight: 0 }}>
             <Canvas />
             
             {/* 加载遮罩 */}
@@ -58,7 +57,9 @@ export const Editor: React.FC = () => {
           </div>
           
           {/* 底部状态栏 */}
-          <CanvasStatusBar />
+          <div style={{ flexShrink: 0, height: '40px' }}>
+            <CanvasStatusBar />
+          </div>
         </div>
         
         {/* 右侧属性面板 */}

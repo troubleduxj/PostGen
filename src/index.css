@@ -1242,3 +1242,74 @@
   width: 16px;
   height: 16px;
 }
+/* 标准素材面板 
+*/
+.standard-asset-panel {
+  @apply bg-white;
+}
+
+.standard-asset-panel .asset-item {
+  @apply transition-all duration-200;
+}
+
+.standard-asset-panel .asset-item:hover {
+  @apply transform scale-105 shadow-sm;
+}
+
+.standard-asset-panel .category-group {
+  @apply border-b border-gray-100 last:border-b-0;
+}
+
+.standard-asset-panel .category-group:last-child {
+  @apply border-b-0;
+}
+
+/* Excalidraw素材面板 */
+.excalidraw-asset-panel {
+  @apply bg-white;
+}
+
+.excalidraw-asset-panel .excalidraw-item {
+  @apply transition-all duration-200;
+}
+
+.excalidraw-asset-panel .excalidraw-item:hover {
+  @apply transform scale-105 shadow-sm;
+}
+
+.excalidraw-asset-panel .library-group {
+  @apply border-b border-gray-100 last:border-b-0;
+}
+
+.excalidraw-asset-panel .library-group:last-child {
+  @apply border-b-0;
+}
+
+
+
+/* 素材面板标签页动画效果 */
+.standard-asset-panel .tab-nav button {
+  @apply relative;
+}
+
+.standard-asset-panel .tab-nav button::before {
+  content: '';
+  @apply absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500 transition-all duration-300;
+}
+
+.standard-asset-panel .tab-nav button:hover::before {
+  @apply w-full;
+}
+
+/* 标签页图标动画 */
+.standard-asset-panel .tab-nav button svg {
+  @apply transition-transform duration-200;
+}
+
+.standard-asset-panel .tab-nav button:hover svg {
+  @apply transform scale-110;
+}
+
+.standard-asset-panel .tab-nav button:active svg {
+  @apply transform scale-95;
+}
