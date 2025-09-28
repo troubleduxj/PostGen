@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { fabric } from 'fabric';
 import { useEditorStore } from '@/stores/editorStore';
+import { MultiSelectToolbar } from './MultiSelectToolbar';
+import { SelectionIndicator } from './SelectionIndicator';
 
 interface CanvasProps {
   className?: string;
@@ -17,6 +19,9 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [canvasContainerRef, setCanvasContainerRef] = useState<HTMLDivElement | null>(null);
+  const [selectedObjects, setSelectedObjects] = useState<fabric.Object[]>([]);
+  const [showMultiSelectToolbar, setShowMultiSelectToolbar] = useState(false);
+  const [hasGroupInSelection, setHasGroupInSelection] = useState(false);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -40,8 +45,42 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
     // 设置现代化的选择样式
     fabricCanvas.selectionColor = 'rgba(24, 144, 255, 0.08)';
     fabricCanvas.selectionBorderColor = '#1890ff';
-    fabricCanvas.selectionLineWidth = 1;
-    fabricCanvas.selectionDashArray = [4, 4];
+    fabricCanvas.selectionLineWidth = 2;
+    fabricCanvas.selectionDashArray = [5, 5];
+    
+    // 启用多选功能
+    fabricCanvas.selection = true;
+    fabricCanvas.preserveObjectStacking = true;
+    
+    // 设置多选时的样式和工具栏显示
+    const updateSelection = (selection: fabric.Object[]) => {
+      setSelectedObjects(selection);
+      const hasGroup = selection.some(obj => obj.type === 'group');
+      setHasGroupInSelection(hasGroup);
+      
+      if (selection.length > 1) {
+        setShowMultiSelectToolbar(true);
+        console.log(`选中了 ${selection.length} 个对象`);
+      } else {
+        setShowMultiSelectToolbar(false);
+      }
+    };
+    
+    fabricCanvas.on('selection:created', (e) => {
+      const selection = e.selected || [];
+      updateSelection(selection);
+    });
+    
+    fabricCanvas.on('selection:updated', (e) => {
+      const selection = e.selected || [];
+      updateSelection(selection);
+    });
+    
+    fabricCanvas.on('selection:cleared', () => {
+      setSelectedObjects([]);
+      setShowMultiSelectToolbar(false);
+      setHasGroupInSelection(false);
+    });
 
     // 添加右键菜单支持
     fabricCanvas.on('mouse:down', (options) => {
@@ -49,13 +88,41 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
         const pointer = fabricCanvas.getPointer(options.e);
         const target = fabricCanvas.findTarget(options.e, false);
         
-        // 简单的右键菜单功能
+        // 右键菜单功能
         if (target) {
-          // 选中对象时的右键菜单
-          const action = window.confirm('删除这个对象吗？');
-          if (action) {
-            fabricCanvas.remove(target);
-            fabricCanvas.renderAll();
+          const activeSelection = fabricCanvas.getActiveObject();
+          
+          // 如果选中了多个对象
+          if (activeSelection && activeSelection.type === 'activeSelection') {
+            const objects = (activeSelection as fabric.ActiveSelection).getObjects();
+            if (objects.length >= 2) {
+              const action = window.confirm(`选中了 ${objects.length} 个对象。是否要组合它们？`);
+              if (action) {
+                // 这里可以调用组合功能
+                console.log('用户选择组合对象');
+                // 触发组合操作的事件
+                window.dispatchEvent(new CustomEvent('canvas:group-objects', { 
+                  detail: { objects } 
+                }));
+              }
+            }
+          } else if (target.type === 'group') {
+            // 如果是组合对象
+            const action = window.confirm('这是一个组合对象。是否要取消组合？');
+            if (action) {
+              console.log('用户选择取消组合');
+              // 触发取消组合操作的事件
+              window.dispatchEvent(new CustomEvent('canvas:ungroup-object', { 
+                detail: { group: target } 
+              }));
+            }
+          } else {
+            // 单个对象的右键菜单
+            const action = window.confirm('删除这个对象吗？');
+            if (action) {
+              fabricCanvas.remove(target);
+              fabricCanvas.renderAll();
+            }
           }
         }
         options.e.preventDefault();
@@ -404,6 +471,20 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
           }}
         />
       </div>
+      
+      {/* 多选工具栏 */}
+      {showMultiSelectToolbar && selectedObjects.length > 1 && (
+        <MultiSelectToolbar
+          selectedObjects={selectedObjects}
+          onClose={() => setShowMultiSelectToolbar(false)}
+        />
+      )}
+      
+      {/* 选择指示器 */}
+      <SelectionIndicator
+        selectedCount={selectedObjects.length}
+        hasGroup={hasGroupInSelection}
+      />
     </div>
   );
 };

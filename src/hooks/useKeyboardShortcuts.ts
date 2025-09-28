@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useEditorStore } from '@/stores/editorStore';
 import { useHistoryManager } from '@/hooks/useHistoryManager';
+import { useLayerManagerStore } from '@/stores/layerManagerStore';
 import { Tool } from '@/types';
 
 interface KeyboardShortcut {
@@ -25,6 +26,7 @@ export const useKeyboardShortcuts = () => {
   } = useEditorStore();
   
   const { undo, redo } = useHistoryManager();
+  const { groupLayers, ungroupLayer, layers } = useLayerManagerStore();
 
   useEffect(() => {
     const shortcuts: KeyboardShortcut[] = [
@@ -141,6 +143,54 @@ export const useKeyboardShortcuts = () => {
           }
         },
         description: '全选'
+      },
+      
+      // 组合操作
+      {
+        key: 'g',
+        ctrlKey: true,
+        action: () => {
+          if (canvas) {
+            const activeSelection = canvas.getActiveObject();
+            if (activeSelection && activeSelection.type === 'activeSelection') {
+              const objects = (activeSelection as fabric.ActiveSelection).getObjects();
+              if (objects.length >= 2) {
+                // 获取选中对象对应的图层ID
+                const selectedLayerIds = objects.map(obj => {
+                  const layer = layers.find(l => l.fabricObject === obj);
+                  return layer?.id;
+                }).filter(Boolean) as string[];
+                
+                if (selectedLayerIds.length >= 2) {
+                  groupLayers(selectedLayerIds, '组合');
+                  console.log('已组合选中的对象');
+                }
+              }
+            }
+          }
+        },
+        description: '组合选中对象'
+      },
+      
+      // 取消组合
+      {
+        key: 'g',
+        ctrlKey: true,
+        shiftKey: true,
+        action: () => {
+          if (canvas) {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && activeObject.type === 'group') {
+              // 找到对应的图层
+              const layer = layers.find(l => l.fabricObject === activeObject);
+              if (layer && layer.type === 'group') {
+                ungroupLayer(layer.id);
+                console.log('已取消组合');
+              }
+            }
+          }
+        },
+        description: '取消组合'
       },
       
       // 缩放操作

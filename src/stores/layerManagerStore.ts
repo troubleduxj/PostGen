@@ -573,6 +573,9 @@ export const useLayerManagerStore = create<LayerManagerStore>()(
         
         if (!canvas) return null;
         
+        // 清除当前选择
+        canvas.discardActiveObject();
+        
         // 创建 Fabric 组合
         const group = new fabric.Group(fabricObjects, {
           left: 0,
@@ -585,12 +588,17 @@ export const useLayerManagerStore = create<LayerManagerStore>()(
         // 添加组合到画布
         canvas.add(group);
         
+        // 选中新创建的组合
+        canvas.setActiveObject(group);
+        canvas.renderAll();
+        
         // 移除原始图层
         layerIds.forEach(layerId => get().removeLayer(layerId));
         
         // 创建组合图层
         const groupLayer = get().addLayer(group, groupName || '组合');
         
+        console.log(`成功组合 ${layerIds.length} 个图层`);
         return groupLayer;
       },
 
@@ -605,20 +613,51 @@ export const useLayerManagerStore = create<LayerManagerStore>()(
         
         if (!canvas) return;
         
+        // 清除当前选择
+        canvas.discardActiveObject();
+        
         // 获取组合中的对象
         const objects = group.getObjects();
         
         // 移除组合
         canvas.remove(group);
         
-        // 添加单独的对象
+        // 添加单独的对象并创建多选
+        const addedObjects: fabric.Object[] = [];
         objects.forEach(obj => {
+          // 重新计算对象的位置（因为组合会改变坐标系）
+          const matrix = group.calcTransformMatrix();
+          const point = fabric.util.transformPoint(
+            new fabric.Point(obj.left || 0, obj.top || 0),
+            matrix
+          );
+          
+          obj.set({
+            left: point.x,
+            top: point.y,
+          });
+          
           canvas.add(obj);
+          addedObjects.push(obj);
           get().addLayer(obj);
         });
         
+        // 选中所有取消组合的对象
+        if (addedObjects.length > 1) {
+          const selection = new fabric.ActiveSelection(addedObjects, {
+            canvas: canvas,
+          });
+          canvas.setActiveObject(selection);
+        } else if (addedObjects.length === 1) {
+          canvas.setActiveObject(addedObjects[0]);
+        }
+        
+        canvas.renderAll();
+        
         // 移除组合图层
         get().removeLayer(groupLayerId);
+        
+        console.log(`成功取消组合，恢复 ${objects.length} 个对象`);
       },
 
       // 拖拽操作
