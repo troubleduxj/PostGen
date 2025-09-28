@@ -41,20 +41,9 @@ const TextProperties: React.FC = () => {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showFontLibrary, setShowFontLibrary] = useState(false);
   const [fontLoading, setFontLoading] = useState<string | null>(null);
-  // 获取初始字体名称
-  const getInitialFontName = () => {
-    const currentFontFamily = textObject.fontFamily || 'Arial';
-    const fontInfo = ALL_FONTS.find(font => 
-      font.family === currentFontFamily || 
-      font.family.includes(currentFontFamily.replace(/['"]/g, '')) ||
-      font.name === currentFontFamily
-    );
-    return fontInfo ? fontInfo.name : currentFontFamily;
-  };
-
   const [textProperties, setTextProperties] = useState({
     fontSize: textObject.fontSize || 16,
-    fontFamily: getInitialFontName(),
+    fontFamily: textObject.fontFamily || 'Arial',
     fontWeight: textObject.fontWeight || 'normal',
     fontStyle: textObject.fontStyle || 'normal',
     underline: textObject.underline || false,
@@ -68,18 +57,12 @@ const TextProperties: React.FC = () => {
 
   // 同步对象属性到本地状态
   useEffect(() => {
-    // 根据fontFamily找到对应的字体名称
     const currentFontFamily = textObject.fontFamily || 'Arial';
-    const fontInfo = ALL_FONTS.find(font => 
-      font.family === currentFontFamily || 
-      font.family.includes(currentFontFamily.replace(/['"]/g, '')) ||
-      font.name === currentFontFamily
-    );
-    const fontName = fontInfo ? fontInfo.name : currentFontFamily;
+    console.log('Syncing properties, current fontFamily:', currentFontFamily);
 
     setTextProperties({
       fontSize: textObject.fontSize || 16,
-      fontFamily: fontName, // 使用字体名称而不是CSS family
+      fontFamily: currentFontFamily, // 直接使用当前的fontFamily
       fontWeight: textObject.fontWeight || 'normal',
       fontStyle: textObject.fontStyle || 'normal',
       underline: textObject.underline || false,
@@ -94,18 +77,26 @@ const TextProperties: React.FC = () => {
 
   const handlePropertyChange = (key: string, value: any) => {
     console.log('Updating property:', key, 'to:', value);
-    setTextProperties(prev => ({ ...prev, [key]: value }));
-    updateProperty(key, value);
     
-    // 验证属性是否已设置
+    // 更新本地状态
+    setTextProperties(prev => ({ ...prev, [key]: value }));
+    
+    // 直接更新Fabric.js对象
+    textObject.set(key, value);
+    
+    // 对于字体相关属性，需要特殊处理
+    if (key === 'fontFamily' || key === 'fontSize' || key === 'fontWeight' || key === 'fontStyle') {
+      // 强制重新计算文本尺寸
+      textObject.initDimensions();
+      textObject.setCoords();
+    }
+    
+    // 重新渲染画布
+    textObject.canvas?.renderAll();
+    
+    // 验证更新
     setTimeout(() => {
-      console.log('Current object fontFamily:', textObject.fontFamily);
-      console.log('Current object properties:', {
-        fontFamily: textObject.fontFamily,
-        fontSize: textObject.fontSize,
-        fontWeight: textObject.fontWeight,
-        fontStyle: textObject.fontStyle
-      });
+      console.log(`Property ${key} updated to:`, textObject.get(key));
     }, 100);
   };
 
@@ -153,36 +144,76 @@ const TextProperties: React.FC = () => {
     
     // 查找字体信息
     const fontInfo = ALL_FONTS.find(font => font.name === fontName);
-    console.log('Font info found:', fontInfo);
+    console.log('Font info:', fontInfo);
 
     if (fontInfo) {
+      // 如果是Google字体，需要先加载
       if (fontInfo.source === 'google') {
-        // 如果是Google字体，需要先加载
-        if (!fontLoaderService.isFontLoaded(fontName)) {
-          setFontLoading(fontName);
-          console.log('Loading Google font:', fontName);
-          try {
-            const loaded = await fontLoaderService.loadFont(fontInfo);
-            console.log('Font loaded successfully:', loaded);
-          } catch (error) {
-            console.error('Failed to load font:', error);
-          } finally {
-            setFontLoading(null);
-          }
-        } else {
-          console.log('Font already loaded:', fontName);
+        setFontLoading(fontName);
+        
+        try {
+          // 动态加载Google字体CSS
+          await loadGoogleFont(fontName);
+          console.log('Google font loaded:', fontName);
+        } catch (error) {
+          console.error('Failed to load Google font:', error);
+        } finally {
+          setFontLoading(null);
         }
       }
 
-      // 使用字体的family属性来设置fontFamily
-      const fontFamily = fontInfo.family || fontName;
-      console.log('Setting fontFamily to:', fontFamily);
-      handlePropertyChange('fontFamily', fontFamily);
+      // 应用字体到Fabric.js对象
+      const fontFamily = fontName; // 直接使用字体名称
+      console.log('Applying font:', fontFamily);
+      
+      // 更新本地状态
+      setTextProperties(prev => ({ ...prev, fontFamily: fontName }));
+      
+      // 直接设置到Fabric.js对象
+      textObject.set('fontFamily', fontFamily);
+      textObject.canvas?.renderAll();
+      
+      // 强制重新渲染
+      setTimeout(() => {
+        textObject.canvas?.renderAll();
+      }, 100);
+      
     } else {
-      // 如果没找到字体信息，直接使用字体名称
-      console.log('Font info not found, using font name directly:', fontName);
-      handlePropertyChange('fontFamily', fontName);
+      console.log('Font not found in database, using directly:', fontName);
+      setTextProperties(prev => ({ ...prev, fontFamily: fontName }));
+      textObject.set('fontFamily', fontName);
+      textObject.canvas?.renderAll();
     }
+  };
+
+  // 加载Google字体
+  const loadGoogleFont = async (fontName: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      // 检查是否已经加载
+      const existingLink = document.querySelector(`link[href*="${fontName.replace(/\s+/g, '+')}"]`);
+      if (existingLink) {
+        resolve();
+        return;
+      }
+
+      // 创建Google Fonts链接
+      const link = document.createElement('link');
+      link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}:wght@300;400;500;600;700&display=swap`;
+      link.rel = 'stylesheet';
+      
+      link.onload = () => {
+        console.log('Font CSS loaded:', fontName);
+        // 等待字体实际可用
+        setTimeout(() => resolve(), 500);
+      };
+      
+      link.onerror = () => {
+        console.error('Failed to load font CSS:', fontName);
+        reject(new Error(`Failed to load font: ${fontName}`));
+      };
+
+      document.head.appendChild(link);
+    });
   };
 
   // 从字体库选择字体
@@ -218,7 +249,7 @@ const TextProperties: React.FC = () => {
                   <option value="Courier New">Courier New</option>
                 </optgroup>
                 
-                <optgroup label="热门字体">
+                <optgroup label="Google字体 - 无衬线">
                   <option value="Open Sans">Open Sans</option>
                   <option value="Roboto">Roboto</option>
                   <option value="Lato">Lato</option>
@@ -226,40 +257,44 @@ const TextProperties: React.FC = () => {
                   <option value="Source Sans Pro">Source Sans Pro</option>
                   <option value="Poppins">Poppins</option>
                   <option value="Inter">Inter</option>
+                  <option value="Nunito">Nunito</option>
+                  <option value="Work Sans">Work Sans</option>
+                  <option value="Raleway">Raleway</option>
                 </optgroup>
                 
-                <optgroup label="衬线字体">
+                <optgroup label="Google字体 - 衬线">
                   <option value="Playfair Display">Playfair Display</option>
                   <option value="Merriweather">Merriweather</option>
                   <option value="Lora">Lora</option>
                   <option value="Source Serif Pro">Source Serif Pro</option>
+                  <option value="Crimson Text">Crimson Text</option>
                 </optgroup>
                 
-                <optgroup label="展示字体">
+                <optgroup label="Google字体 - 展示">
                   <option value="Oswald">Oswald</option>
                   <option value="Bebas Neue">Bebas Neue</option>
                   <option value="Anton">Anton</option>
                   <option value="Righteous">Righteous</option>
+                  <option value="Fredoka One">Fredoka One</option>
                 </optgroup>
                 
-                <optgroup label="手写字体">
+                <optgroup label="Google字体 - 手写">
                   <option value="Dancing Script">Dancing Script</option>
                   <option value="Pacifico">Pacifico</option>
                   <option value="Satisfy">Satisfy</option>
                   <option value="Kalam">Kalam</option>
                 </optgroup>
                 
-                <optgroup label="等宽字体">
+                <optgroup label="Google字体 - 等宽">
                   <option value="Roboto Mono">Roboto Mono</option>
                   <option value="Source Code Pro">Source Code Pro</option>
                   <option value="Fira Code">Fira Code</option>
+                  <option value="JetBrains Mono">JetBrains Mono</option>
                 </optgroup>
                 
                 <optgroup label="中文字体">
-                  <option value="Noto Sans SC">思源黑体</option>
-                  <option value="Noto Serif SC">思源宋体</option>
-                  <option value="Microsoft YaHei">微软雅黑</option>
-                  <option value="PingFang SC">苹方</option>
+                  <option value="Noto Sans SC">思源黑体 (Noto Sans SC)</option>
+                  <option value="Noto Serif SC">思源宋体 (Noto Serif SC)</option>
                 </optgroup>
               </select>
               
