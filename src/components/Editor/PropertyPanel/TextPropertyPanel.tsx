@@ -41,9 +41,20 @@ const TextProperties: React.FC = () => {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showFontLibrary, setShowFontLibrary] = useState(false);
   const [fontLoading, setFontLoading] = useState<string | null>(null);
+  // 获取初始字体名称
+  const getInitialFontName = () => {
+    const currentFontFamily = textObject.fontFamily || 'Arial';
+    const fontInfo = ALL_FONTS.find(font => 
+      font.family === currentFontFamily || 
+      font.family.includes(currentFontFamily.replace(/['"]/g, '')) ||
+      font.name === currentFontFamily
+    );
+    return fontInfo ? fontInfo.name : currentFontFamily;
+  };
+
   const [textProperties, setTextProperties] = useState({
     fontSize: textObject.fontSize || 16,
-    fontFamily: textObject.fontFamily || 'Arial',
+    fontFamily: getInitialFontName(),
     fontWeight: textObject.fontWeight || 'normal',
     fontStyle: textObject.fontStyle || 'normal',
     underline: textObject.underline || false,
@@ -57,9 +68,18 @@ const TextProperties: React.FC = () => {
 
   // 同步对象属性到本地状态
   useEffect(() => {
+    // 根据fontFamily找到对应的字体名称
+    const currentFontFamily = textObject.fontFamily || 'Arial';
+    const fontInfo = ALL_FONTS.find(font => 
+      font.family === currentFontFamily || 
+      font.family.includes(currentFontFamily.replace(/['"]/g, '')) ||
+      font.name === currentFontFamily
+    );
+    const fontName = fontInfo ? fontInfo.name : currentFontFamily;
+
     setTextProperties({
       fontSize: textObject.fontSize || 16,
-      fontFamily: textObject.fontFamily || 'Arial',
+      fontFamily: fontName, // 使用字体名称而不是CSS family
       fontWeight: textObject.fontWeight || 'normal',
       fontStyle: textObject.fontStyle || 'normal',
       underline: textObject.underline || false,
@@ -73,8 +93,20 @@ const TextProperties: React.FC = () => {
   }, [textObject]);
 
   const handlePropertyChange = (key: string, value: any) => {
+    console.log('Updating property:', key, 'to:', value);
     setTextProperties(prev => ({ ...prev, [key]: value }));
     updateProperty(key, value);
+    
+    // 验证属性是否已设置
+    setTimeout(() => {
+      console.log('Current object fontFamily:', textObject.fontFamily);
+      console.log('Current object properties:', {
+        fontFamily: textObject.fontFamily,
+        fontSize: textObject.fontSize,
+        fontWeight: textObject.fontWeight,
+        fontStyle: textObject.fontStyle
+      });
+    }, 100);
   };
 
   const toggleFontWeight = () => {
@@ -116,28 +148,41 @@ const TextProperties: React.FC = () => {
   };
 
   // 处理字体变化
-  const handleFontChange = async (fontFamily: string) => {
+  const handleFontChange = async (fontName: string) => {
+    console.log('Changing font to:', fontName);
+    
     // 查找字体信息
-    const fontInfo = ALL_FONTS.find(font => 
-      font.name === fontFamily || font.family.includes(fontFamily)
-    );
+    const fontInfo = ALL_FONTS.find(font => font.name === fontName);
+    console.log('Font info found:', fontInfo);
 
-    if (fontInfo && fontInfo.source === 'google') {
-      // 如果是Google字体，需要先加载
-      if (!fontLoaderService.isFontLoaded(fontFamily)) {
-        setFontLoading(fontFamily);
-        try {
-          await fontLoaderService.loadFont(fontInfo);
-        } catch (error) {
-          console.error('Failed to load font:', error);
-        } finally {
-          setFontLoading(null);
+    if (fontInfo) {
+      if (fontInfo.source === 'google') {
+        // 如果是Google字体，需要先加载
+        if (!fontLoaderService.isFontLoaded(fontName)) {
+          setFontLoading(fontName);
+          console.log('Loading Google font:', fontName);
+          try {
+            const loaded = await fontLoaderService.loadFont(fontInfo);
+            console.log('Font loaded successfully:', loaded);
+          } catch (error) {
+            console.error('Failed to load font:', error);
+          } finally {
+            setFontLoading(null);
+          }
+        } else {
+          console.log('Font already loaded:', fontName);
         }
       }
-    }
 
-    // 应用字体
-    handlePropertyChange('fontFamily', fontFamily);
+      // 使用字体的family属性来设置fontFamily
+      const fontFamily = fontInfo.family || fontName;
+      console.log('Setting fontFamily to:', fontFamily);
+      handlePropertyChange('fontFamily', fontFamily);
+    } else {
+      // 如果没找到字体信息，直接使用字体名称
+      console.log('Font info not found, using font name directly:', fontName);
+      handlePropertyChange('fontFamily', fontName);
+    }
   };
 
   // 从字体库选择字体
