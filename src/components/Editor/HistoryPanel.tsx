@@ -199,7 +199,12 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({ className }) => {
 
   // 过滤和搜索逻辑
   const filteredEntries = useMemo(() => {
-    let allEntries = [...past, ...(present ? [present] : []), ...future];
+    // 确保past、present、future都是数组
+    const safePast = Array.isArray(past) ? past : [];
+    const safeFuture = Array.isArray(future) ? future : [];
+    const presentArray = present ? [present] : [];
+    
+    let allEntries = [...safePast, ...presentArray, ...safeFuture];
     
     // 应用搜索
     if (searchQuery.trim()) {

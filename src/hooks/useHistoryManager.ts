@@ -417,6 +417,11 @@ export const useHistoryManager = () => {
     // 状态查询
     ...getHistoryStats,
     
+    // 历史记录状态
+    past: historyStore.past,
+    present: historyStore.present,
+    future: historyStore.future,
+    
     // 历史记录管理
     clearHistory: historyStore.clearHistory,
     searchHistory: historyStore.searchHistory,

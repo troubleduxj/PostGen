@@ -387,38 +387,34 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({ className = '' }) => {
         <div className="flex items-center gap-1">
           <button
             onClick={handleCreateLayer}
-            className="flex items-center gap-1 px-2 py-1 text-xs bg-primary-50 text-primary-600 rounded hover:bg-primary-100"
+            className="flex items-center justify-center w-8 h-8 bg-primary-50 text-primary-600 rounded hover:bg-primary-100 transition-colors"
             title="新建图层"
           >
-            <Plus size={12} />
-            新建
+            <Plus size={14} />
           </button>
           <button
             onClick={handleDuplicateSelected}
             disabled={selection.selectedLayerIds.length === 0}
-            className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-50 text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="复制选中"
+            className="flex items-center justify-center w-8 h-8 bg-gray-50 text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title="复制选中图层"
           >
-            <Copy size={12} />
-            复制
+            <Copy size={14} />
           </button>
           <button
             onClick={handleDeleteSelected}
             disabled={selection.selectedLayerIds.length === 0}
-            className="flex items-center gap-1 px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="删除选中"
+            className="flex items-center justify-center w-8 h-8 bg-red-50 text-red-600 rounded hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title="删除选中图层"
           >
-            <Trash2 size={12} />
-            删除
+            <Trash2 size={14} />
           </button>
           <button
             onClick={handleGroupSelected}
             disabled={selection.selectedLayerIds.length < 2}
-            className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-50 text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="组合图层"
+            className="flex items-center justify-center w-8 h-8 bg-gray-50 text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title="组合选中图层"
           >
-            <Group size={12} />
-            组合
+            <Group size={14} />
           </button>
           <button
             onClick={handleUngroupSelected}
@@ -426,11 +422,10 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({ className = '' }) => {
               selection.selectedLayerIds.length !== 1 ||
               !layers.find(l => l.id === selection.selectedLayerIds[0] && l.type === 'group')
             }
-            className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-50 text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center w-8 h-8 bg-gray-50 text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             title="取消组合"
           >
-            <Ungroup size={12} />
-            取消组合
+            <Ungroup size={14} />
           </button>
         </div>
       </div>

@@ -116,6 +116,11 @@ const ACTION_DESCRIPTIONS: Record<string, string> = {
 // 工具函数：生成缩略图
 const generateThumbnail = (canvas: fabric.Canvas): string | undefined => {
   try {
+    // 检查画布是否有效
+    if (!canvas || typeof canvas.toDataURL !== 'function') {
+      return undefined;
+    }
+    
     return canvas.toDataURL({
       format: 'png',
       quality: 0.3,
@@ -184,8 +189,22 @@ export const useHistoryStore = create<HistoryStore>()(
         if (!canvas) return;
 
         try {
-          // 序列化画布状态
-          let canvasState = JSON.stringify(canvas.toJSON());
+          // 序列化画布状态，添加错误处理
+          let canvasState: string;
+          try {
+            const canvasJSON = canvas.toJSON();
+            canvasState = JSON.stringify(canvasJSON);
+          } catch (serializationError) {
+            console.warn('Canvas serialization failed, using fallback:', serializationError);
+            // 使用简化的状态作为后备
+            canvasState = JSON.stringify({
+              version: '5.3.0',
+              objects: [],
+              background: canvas.backgroundColor || '#ffffff',
+              width: canvas.getWidth(),
+              height: canvas.getHeight(),
+            });
+          }
           
           // 如果启用压缩，压缩状态数据
           if (state.compressionEnabled) {
