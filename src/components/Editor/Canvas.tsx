@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { fabric } from 'fabric';
 import { useEditorStore } from '@/stores/editorStore';
+import { useLayerManagerStore } from '@/stores/layerManagerStore';
 import { MultiSelectToolbar } from './MultiSelectToolbar';
 import { SelectionIndicator } from './SelectionIndicator';
 
@@ -12,6 +13,7 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const { setCanvas, canvasState, updateCanvasState, preferences } = useEditorStore();
+  const { addLayer, removeLayer, updateLayer, syncWithCanvas } = useLayerManagerStore();
   const [canvasSize, setCanvasSize] = useState({ 
     width: canvasState.width, 
     height: canvasState.height 
@@ -81,6 +83,8 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
       setShowMultiSelectToolbar(false);
       setHasGroupInSelection(false);
     });
+
+
 
     // 添加右键菜单支持
     fabricCanvas.on('mouse:down', (options) => {
@@ -174,7 +178,9 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
       selectable: false
     });
 
+    // 先添加对象到画布
     fabricCanvas.add(welcomeText, subText, decorRect);
+    
     fabricCanvas.renderAll();
 
     // 清理函数
@@ -183,6 +189,15 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
       fabricCanvas.dispose();
     };
   }, []); // 移除canvasSize依赖，只在组件挂载时创建一次
+
+  // 确保图层同步
+  useEffect(() => {
+    if (fabricCanvasRef.current) {
+      const canvas = fabricCanvasRef.current;
+      console.log('Canvas: Syncing layers, objects count:', canvas.getObjects().length);
+      syncWithCanvas(canvas);
+    }
+  }, [syncWithCanvas]);
 
   // 单独处理canvas尺寸变化
   useEffect(() => {

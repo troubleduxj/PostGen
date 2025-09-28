@@ -8,9 +8,9 @@ import {
   AlignCenter,
   AlignRight,
   AlignJustify,
-  AlignTop,
-  AlignMiddle,
-  AlignBottom,
+  ArrowUp,
+  Minus,
+  ArrowDown,
   Layers,
   Move,
   RotateCw
@@ -238,7 +238,7 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
         className="flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 transition-colors"
         title="顶部对齐"
       >
-        <AlignTop size={16} />
+        <ArrowUp size={16} />
       </button>
       
       <button
@@ -246,7 +246,7 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
         className="flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 transition-colors"
         title="垂直居中"
       >
-        <AlignMiddle size={16} />
+        <Minus size={16} />
       </button>
       
       <button
@@ -254,7 +254,7 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
         className="flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 transition-colors"
         title="底部对齐"
       >
-        <AlignBottom size={16} />
+        <ArrowDown size={16} />
       </button>
 
       {/* 分隔线 */}

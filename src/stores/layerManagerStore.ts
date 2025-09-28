@@ -237,6 +237,13 @@ export const useLayerManagerStore = create<LayerManagerStore>()(
           lastSyncTime: Date.now(),
         });
         
+        console.log('Layer added:', {
+          layerId,
+          name: layerName,
+          type,
+          totalLayers: newLayers.length
+        });
+        
         // 生成缩略图
         get().generateThumbnail(layer);
         

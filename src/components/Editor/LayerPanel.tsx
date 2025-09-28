@@ -94,11 +94,13 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({ className = '' }) => {
   // 同步画布对象到图层
   useEffect(() => {
     if (canvas) {
+      console.log('LayerPanel: Syncing with canvas, objects count:', canvas.getObjects().length);
       syncWithCanvas(canvas);
       
       // 监听画布对象变化
       const handleObjectAdded = (e: fabric.IEvent) => {
         if (e.target && !e.target.get('layerId')) {
+          console.log('LayerPanel: Adding new layer for object:', e.target.type);
           addLayer(e.target);
         }
       };
@@ -151,6 +153,13 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({ className = '' }) => {
 
   // 获取过滤后的图层
   const filteredLayers = getFilteredLayers();
+  
+  // 调试信息
+  console.log('LayerPanel render:', {
+    totalLayers: layers.length,
+    filteredLayers: filteredLayers.length,
+    canvasObjects: canvas?.getObjects().length || 0
+  });
   
   // 排序图层
   const sortedLayers = [...filteredLayers].sort((a, b) => {
