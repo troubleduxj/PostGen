@@ -54,6 +54,9 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
     fabricCanvas.selection = true;
     fabricCanvas.preserveObjectStacking = true;
     
+    // 确保多选功能正常工作
+    console.log('Canvas multi-selection enabled:', fabricCanvas.selection);
+    
     // 设置多选时的样式和工具栏显示
     const updateSelection = (selection: fabric.Object[]) => {
       setSelectedObjects(selection);
@@ -181,6 +184,19 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
     // 先添加对象到画布
     fabricCanvas.add(welcomeText, subText, decorRect);
     
+    // 确保选择工具处于激活状态
+    fabricCanvas.isDrawingMode = false;
+    fabricCanvas.selection = true;
+    
+    // 测试多选功能
+    setTimeout(() => {
+      console.log('Canvas selection status:', {
+        selection: fabricCanvas.selection,
+        isDrawingMode: fabricCanvas.isDrawingMode,
+        objectsCount: fabricCanvas.getObjects().length
+      });
+    }, 1000);
+    
     fabricCanvas.renderAll();
 
     // 清理函数
@@ -190,12 +206,16 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
     };
   }, []); // 移除canvasSize依赖，只在组件挂载时创建一次
 
-  // 确保图层同步
+  // 确保图层同步 - 延迟执行以确保LayerPanel已挂载
   useEffect(() => {
     if (fabricCanvasRef.current) {
       const canvas = fabricCanvasRef.current;
-      console.log('Canvas: Syncing layers, objects count:', canvas.getObjects().length);
-      syncWithCanvas(canvas);
+      const timer = setTimeout(() => {
+        console.log('Canvas: Initial sync with layers, objects count:', canvas.getObjects().length);
+        syncWithCanvas(canvas);
+      }, 500); // 延迟500ms确保LayerPanel已挂载
+      
+      return () => clearTimeout(timer);
     }
   }, [syncWithCanvas]);
 
@@ -500,6 +520,38 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
         selectedCount={selectedObjects.length}
         hasGroup={hasGroupInSelection}
       />
+      
+      {/* 调试按钮 - 测试多选功能 */}
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          onClick={() => {
+            const canvas = fabricCanvasRef.current;
+            if (canvas) {
+              const objects = canvas.getObjects();
+              console.log('Debug: Canvas objects:', objects.length);
+              console.log('Debug: Selection enabled:', canvas.selection);
+              console.log('Debug: Drawing mode:', canvas.isDrawingMode);
+              
+              // 强制启用多选
+              canvas.selection = true;
+              canvas.isDrawingMode = false;
+              
+              // 尝试选择所有对象
+              if (objects.length > 1) {
+                const selection = new fabric.ActiveSelection(objects, {
+                  canvas: canvas,
+                });
+                canvas.setActiveObject(selection);
+                canvas.renderAll();
+                console.log('Debug: Created multi-selection with', objects.length, 'objects');
+              }
+            }
+          }}
+          className="px-3 py-1 bg-blue-600 text-white text-xs rounded shadow"
+        >
+          测试多选
+        </button>
+      </div>
     </div>
   );
 };

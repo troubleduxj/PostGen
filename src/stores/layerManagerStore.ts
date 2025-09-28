@@ -188,8 +188,15 @@ export const useLayerManagerStore = create<LayerManagerStore>()(
       addLayer: (fabricObject, name) => {
         const { layers, layerMap, layerNameCounters } = get();
         
+        // 检查对象是否已经有图层ID
+        const existingLayerId = fabricObject.get('layerId');
+        if (existingLayerId && layerMap.has(existingLayerId)) {
+          console.log('Layer already exists for object:', existingLayerId);
+          return layerMap.get(existingLayerId)!;
+        }
+        
         // 生成图层ID
-        const layerId = `layer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const layerId = existingLayerId || `layer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
         // 确定图层类型
         let type: LayerType = 'shape';
@@ -748,10 +755,16 @@ export const useLayerManagerStore = create<LayerManagerStore>()(
           const objects = canvas.getObjects();
           const { layerMap } = get();
           
+          console.log('Syncing with canvas:', {
+            canvasObjects: objects.length,
+            existingLayers: layerMap.size
+          });
+          
           // 检查是否有新对象需要添加图层
           objects.forEach(obj => {
             const layerId = obj.get('layerId');
             if (!layerId || !layerMap.has(layerId)) {
+              console.log('Adding layer for object without layerId:', obj.type);
               get().addLayer(obj);
             }
           });
@@ -759,9 +772,17 @@ export const useLayerManagerStore = create<LayerManagerStore>()(
           // 检查是否有图层对应的对象已被删除
           const objectIds = new Set(objects.map(obj => obj.get('layerId')).filter(Boolean));
           const layersToRemove = Array.from(layerMap.keys()).filter(layerId => !objectIds.has(layerId));
-          layersToRemove.forEach(layerId => get().removeLayer(layerId));
+          
+          if (layersToRemove.length > 0) {
+            console.log('Removing orphaned layers:', layersToRemove);
+            layersToRemove.forEach(layerId => get().removeLayer(layerId));
+          }
           
           set({ lastSyncTime: Date.now() });
+          
+          console.log('Sync completed:', {
+            totalLayers: get().layers.length
+          });
         } catch (error) {
           console.error('Failed to sync with canvas:', error);
         } finally {
@@ -851,46 +872,66 @@ export const useLayerManagerStore = create<LayerManagerStore>()(
       },
 
       generateThumbnail: async (layer) => {
-        try {
-          const obj = layer.fabricObject;
-          const canvas = obj.canvas;
-          
-          if (!canvas) return '';
-          
-          // 创建临时画布用于生成缩略图
-          const tempCanvas = new fabric.Canvas(document.createElement('canvas'), {
-            width: 64,
-            height: 64,
-          });
-          
-          // 克隆对象到临时画布
-          obj.clone((cloned: fabric.Object) => {
-            // 缩放对象以适应缩略图尺寸
-            const scale = Math.min(64 / (cloned.width || 1), 64 / (cloned.height || 1));
-            cloned.scale(scale);
-            cloned.center();
+        return new Promise<string>((resolve) => {
+          try {
+            const obj = layer.fabricObject;
+            const canvas = obj.canvas;
             
-            tempCanvas.add(cloned);
-            tempCanvas.renderAll();
+            if (!canvas) {
+              resolve('');
+              return;
+            }
             
-            // 生成缩略图数据URL
-            const thumbnail = tempCanvas.toDataURL({
-              format: 'png',
-              quality: 0.8,
-              multiplier: 1,
+            // 创建临时画布用于生成缩略图
+            const tempCanvas = new fabric.Canvas(document.createElement('canvas'), {
+              width: 64,
+              height: 64,
             });
             
-            // 更新图层缩略图
-            get().updateLayer(layer.id, { thumbnail });
-            
-            // 清理临时画布
-            tempCanvas.dispose();
-          });
-        } catch (error) {
-          console.error('Failed to generate thumbnail:', error);
-        }
-        
-        return '';
+            // 克隆对象到临时画布
+            obj.clone((cloned: fabric.Object) => {
+              try {
+                // 缩放对象以适应缩略图尺寸
+                const bounds = cloned.getBoundingRect();
+                const scale = Math.min(60 / bounds.width, 60 / bounds.height);
+                
+                cloned.set({
+                  left: 32,
+                  top: 32,
+                  scaleX: (cloned.scaleX || 1) * scale,
+                  scaleY: (cloned.scaleY || 1) * scale,
+                  originX: 'center',
+                  originY: 'center'
+                });
+                
+                tempCanvas.add(cloned);
+                tempCanvas.renderAll();
+                
+                // 生成缩略图数据URL
+                const thumbnail = tempCanvas.toDataURL({
+                  format: 'png',
+                  quality: 0.8,
+                  multiplier: 1,
+                });
+                
+                // 更新图层缩略图
+                get().updateLayer(layer.id, { thumbnail });
+                
+                // 清理临时画布
+                tempCanvas.dispose();
+                
+                resolve(thumbnail);
+              } catch (error) {
+                console.error('Failed to generate thumbnail:', error);
+                tempCanvas.dispose();
+                resolve('');
+              }
+            });
+          } catch (error) {
+            console.error('Failed to generate thumbnail:', error);
+            resolve('');
+          }
+        });
       },
 
       // 重置

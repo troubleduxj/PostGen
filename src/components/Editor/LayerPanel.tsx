@@ -99,9 +99,12 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({ className = '' }) => {
       
       // 监听画布对象变化
       const handleObjectAdded = (e: fabric.IEvent) => {
-        if (e.target && !e.target.get('layerId')) {
-          console.log('LayerPanel: Adding new layer for object:', e.target.type);
-          addLayer(e.target);
+        if (e.target) {
+          console.log('LayerPanel: Object added event, layerId:', e.target.get('layerId'));
+          if (!e.target.get('layerId')) {
+            console.log('LayerPanel: Adding new layer for object:', e.target.type);
+            addLayer(e.target);
+          }
         }
       };
 
@@ -158,7 +161,8 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({ className = '' }) => {
   console.log('LayerPanel render:', {
     totalLayers: layers.length,
     filteredLayers: filteredLayers.length,
-    canvasObjects: canvas?.getObjects().length || 0
+    canvasObjects: canvas?.getObjects().length || 0,
+    isSyncing
   });
   
   // 排序图层
@@ -435,6 +439,15 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({ className = '' }) => {
             title="取消组合"
           >
             <Ungroup size={14} />
+          </button>
+          
+          {/* 调试：手动同步按钮 */}
+          <button
+            onClick={() => canvas && syncWithCanvas(canvas)}
+            className="flex items-center justify-center w-8 h-8 bg-yellow-50 text-yellow-600 rounded hover:bg-yellow-100 transition-colors"
+            title="手动同步图层"
+          >
+            🔄
           </button>
         </div>
       </div>
