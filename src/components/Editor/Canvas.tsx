@@ -4,6 +4,7 @@ import { useEditorStore } from '@/stores/editorStore';
 import { useLayerManagerStore } from '@/stores/layerManagerStore';
 import { MultiSelectToolbar } from './MultiSelectToolbar';
 import { SelectionIndicator } from './SelectionIndicator';
+import { GridSystem } from './GridSystem';
 
 interface CanvasProps {
   className?: string;
@@ -536,6 +537,10 @@ export const Canvas: React.FC<CanvasProps> = ({ className = '' }) => {
         />
       )}
       
+      {/* 网格系统 */}
+      {fabricCanvasRef.current && (
+        <GridSystem canvas={fabricCanvasRef.current} />
+      )}
 
     </div>
   );

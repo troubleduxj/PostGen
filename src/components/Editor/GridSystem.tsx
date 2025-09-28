@@ -26,20 +26,32 @@ export const GridSystem: React.FC<GridSystemProps> = ({ canvas }) => {
     const ctx = gridCanvas.getContext('2d');
     
     if (ctx) {
+      // 清除画布
+      ctx.clearRect(0, 0, size, size);
+      
       // 设置网格样式
       ctx.strokeStyle = color;
       ctx.globalAlpha = opacity;
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 0.5; // 使用更细的线条
       
       // 绘制网格线
       ctx.beginPath();
       // 垂直线
-      ctx.moveTo(size, 0);
-      ctx.lineTo(size, size);
+      ctx.moveTo(size - 0.5, 0);
+      ctx.lineTo(size - 0.5, size);
       // 水平线
-      ctx.moveTo(0, size);
-      ctx.lineTo(size, size);
+      ctx.moveTo(0, size - 0.5);
+      ctx.lineTo(size, size - 0.5);
       ctx.stroke();
+      
+      // 在网格交叉点绘制小点（可选）
+      if (size >= 20) {
+        ctx.fillStyle = color;
+        ctx.globalAlpha = opacity * 0.8;
+        ctx.beginPath();
+        ctx.arc(size - 0.5, size - 0.5, 0.5, 0, 2 * Math.PI);
+        ctx.fill();
+      }
     }
     
     // 创建 Fabric.js 图案
@@ -58,7 +70,10 @@ export const GridSystem: React.FC<GridSystemProps> = ({ canvas }) => {
     }
 
     // 如果网格不可见，直接返回
-    if (!grid.visible) return;
+    if (!grid.visible) {
+      canvas.renderAll();
+      return;
+    }
 
     // 创建新的网格图案
     gridPatternRef.current = createGridPattern();
@@ -73,15 +88,20 @@ export const GridSystem: React.FC<GridSystemProps> = ({ canvas }) => {
       selectable: false,
       evented: false,
       excludeFromExport: true,
+      hoverCursor: 'default',
+      moveCursor: 'default',
     });
 
     // 添加自定义属性标识这是网格
     (gridRect as any).isGrid = true;
+    (gridRect as any).name = 'grid';
 
     // 将网格添加到画布底层
     canvas.insertAt(gridRect, 0, false);
     gridObjectRef.current = gridRect;
 
+    // 确保网格在最底层
+    canvas.sendToBack(gridRect);
     canvas.renderAll();
   };
 

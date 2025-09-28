@@ -10,6 +10,7 @@ import {
     History,
 } from 'lucide-react';
 import { useEditorStore } from '@/stores/editorStore';
+import { useAlignmentStore } from '@/stores/alignmentStore';
 import { useToolManager, useToolRegistry } from '@/hooks/useToolManager';
 import { registerDefaultTools } from '@/tools';
 import { ExportModal } from './ExportModal';
@@ -64,9 +65,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({ className = '' }) => {
         activateToolById(toolId);
     };
 
+    // 获取网格状态
+    const { grid, toggleGrid: toggleGridStore } = useAlignmentStore();
+    
     // 切换网格显示
     const toggleGrid = () => {
-        updateCanvasState({ gridVisible: !canvasState.gridVisible });
+        toggleGridStore();
     };
 
     // 适应屏幕 - 使用store中的方法
@@ -187,7 +191,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ className = '' }) => {
             <div className="flex items-center gap-1">
                 <button
                     onClick={toggleGrid}
-                    className={`toolbar-btn ${canvasState.gridVisible ? 'active' : ''}`}
+                    className={`toolbar-btn ${grid.visible ? 'active' : ''}`}
                     title="显示/隐藏网格"
                 >
                     <Grid3X3 size={18} />
