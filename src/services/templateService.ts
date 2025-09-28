@@ -1,390 +1,221 @@
 import { fabric } from 'fabric';
-import { Template, SerializedObject } from '@/types';
+import { DesignTemplate, TemplateElement } from '@/data/designTemplates';
 
-export interface TemplateApplicationProgress {
-  stage: 'parsing' | 'loading' | 'applying' | 'complete';
-  progress: number;
-  message: string;
-  error?: string;
-}
-
-export interface TemplateApplicationOptions {
-  clearCanvas?: boolean;
-  preserveCanvasSize?: boolean;
-  onProgress?: (progress: TemplateApplicationProgress) => void;
-}
-
+// 模板应用服务
 export class TemplateService {
-  private static instance: TemplateService;
-
-  public static getInstance(): TemplateService {
-    if (!TemplateService.instance) {
-      TemplateService.instance = new TemplateService();
-    }
-    return TemplateService.instance;
-  }
-
-  /**
-   * 应用模板到画布
-   */
-  public async applyTemplate(
-    canvas: fabric.Canvas,
-    template: Template,
-    options: TemplateApplicationOptions = {}
-  ): Promise<void> {
-    const {
-      clearCanvas = true,
-      preserveCanvasSize = false,
-      onProgress
-    } = options;
-
-    try {
-      // 阶段1: 解析模板数据
-      onProgress?.({
-        stage: 'parsing',
-        progress: 10,
-        message: '正在解析模板数据...'
-      });
-
-      const templateData = this.parseTemplateData(template);
-      
-      // 阶段2: 清理画布（如果需要）
-      if (clearCanvas) {
-        onProgress?.({
-          stage: 'loading',
-          progress: 20,
-          message: '正在清理画布...'
-        });
-        
-        canvas.clear();
-      }
-
-      // 阶段3: 设置画布尺寸
-      if (!preserveCanvasSize) {
-        onProgress?.({
-          stage: 'loading',
-          progress: 30,
-          message: '正在调整画布尺寸...'
-        });
-        
-        canvas.setDimensions({
-          width: template.width,
-          height: template.height
-        });
-      }
-
-      // 阶段4: 加载模板对象
-      onProgress?.({
-        stage: 'applying',
-        progress: 40,
-        message: '正在加载模板对象...'
-      });
-
-      await this.loadTemplateObjects(canvas, templateData, onProgress);
-
-      // 阶段5: 完成
-      onProgress?.({
-        stage: 'complete',
-        progress: 100,
-        message: '模板应用完成'
-      });
-
-      // 渲染画布
-      canvas.renderAll();
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '未知错误';
-      onProgress?.({
-        stage: 'complete',
-        progress: 0,
-        message: '模板应用失败',
-        error: errorMessage
-      });
-      throw error;
-    }
-  }
-
-  /**
-   * 解析模板数据
-   */
-  private parseTemplateData(template: Template): SerializedObject {
-    try {
-      // 如果 objects 已经是对象，直接返回
-      if (typeof template.objects === 'object') {
-        return template.objects as SerializedObject;
-      }
-
-      // 如果是字符串，尝试解析
-      if (typeof template.objects === 'string') {
-        return JSON.parse(template.objects);
-      }
-
-      throw new Error('无效的模板数据格式');
-    } catch (error) {
-      throw new Error(`模板数据解析失败: ${error instanceof Error ? error.message : '未知错误'}`);
-    }
-  }
-
-  /**
-   * 加载模板对象到画布
-   */
-  private async loadTemplateObjects(
-    canvas: fabric.Canvas,
-    templateData: SerializedObject,
-    onProgress?: (progress: TemplateApplicationProgress) => void
-  ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        // 使用 Fabric.js 的 loadFromJSON 方法
-        canvas.loadFromJSON(templateData, () => {
-          // 加载完成后的处理
-          this.postProcessObjects(canvas);
-          
-          onProgress?.({
-            stage: 'applying',
-            progress: 90,
-            message: '正在完成最后处理...'
-          });
-          
-          resolve();
-        }, (o: any, object: fabric.Object) => {
-          // 对象加载回调，可以在这里进行自定义处理
-          this.processLoadedObject(object);
-        });
-      } catch (error) {
-        reject(new Error(`对象加载失败: ${error instanceof Error ? error.message : '未知错误'}`));
-      }
-    });
-  }
-
-  /**
-   * 处理加载后的对象
-   */
-  private processLoadedObject(object: fabric.Object): void {
-    // 确保对象可选择和可编辑
-    object.set({
-      selectable: true,
-      evented: true,
-      hasControls: true,
-      hasBorders: true
-    });
-
-    // 为对象添加唯一ID（如果没有）
-    if (!object.id) {
-      object.id = this.generateObjectId();
-    }
-
-    // 处理特定类型的对象
-    if (object.type === 'text' || object.type === 'i-text') {
-      this.processTextObject(object as fabric.IText);
-    } else if (object.type === 'image') {
-      this.processImageObject(object as fabric.Image);
-    }
-  }
-
-  /**
-   * 处理文本对象
-   */
-  private processTextObject(textObject: fabric.IText): void {
-    // 确保文本对象可编辑
-    textObject.set({
-      editable: true,
-      selectable: true
-    });
-
-    // 添加双击编辑事件
-    textObject.on('mousedblclick', () => {
-      textObject.enterEditing();
-      textObject.selectAll();
-    });
-  }
-
-  /**
-   * 处理图片对象
-   */
-  private processImageObject(imageObject: fabric.Image): void {
-    // 确保图片对象的交互性
-    imageObject.set({
-      selectable: true,
-      evented: true
-    });
-
-    // 处理图片加载错误
-    if (imageObject.getElement()) {
-      const imgElement = imageObject.getElement() as HTMLImageElement;
-      imgElement.onerror = () => {
-        console.warn('Template image failed to load:', imageObject.getSrc());
-        // 可以设置一个默认的占位图片
-        this.setPlaceholderImage(imageObject);
-      };
-    }
-  }
-
-  /**
-   * 设置占位图片
-   */
-  private setPlaceholderImage(imageObject: fabric.Image): void {
-    // 创建一个简单的占位符
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    canvas.width = 200;
-    canvas.height = 200;
+  // 应用模板到画布
+  static async applyTemplate(canvas: fabric.Canvas, template: DesignTemplate): Promise<void> {
+    // 清空画布
+    canvas.clear();
     
-    // 绘制占位符
-    ctx.fillStyle = '#f0f0f0';
-    ctx.fillRect(0, 0, 200, 200);
-    ctx.fillStyle = '#999';
-    ctx.font = '16px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('图片加载失败', 100, 100);
-
-    // 设置为图片源
-    imageObject.setSrc(canvas.toDataURL(), () => {
-      imageObject.canvas?.renderAll();
-    });
-  }
-
-  /**
-   * 后处理所有对象
-   */
-  private postProcessObjects(canvas: fabric.Canvas): void {
-    const objects = canvas.getObjects();
-    
-    objects.forEach((object, index) => {
-      // 确保对象有正确的层级
-      object.moveTo(index);
-      
-      // 添加对象变更监听
-      object.on('modified', () => {
-        // 触发画布更新事件
-        canvas.fire('object:modified', { target: object });
-      });
-    });
-
-    // 清除选择
-    canvas.discardActiveObject();
-  }
-
-  /**
-   * 生成对象ID
-   */
-  private generateObjectId(): string {
-    return `obj_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }
-
-  /**
-   * 验证模板数据
-   */
-  public validateTemplate(template: Template): { valid: boolean; errors: string[] } {
-    const errors: string[] = [];
-
-    // 检查必需字段
-    if (!template.id) errors.push('模板ID不能为空');
-    if (!template.name) errors.push('模板名称不能为空');
-    if (!template.objects) errors.push('模板对象数据不能为空');
-    if (!template.width || template.width <= 0) errors.push('模板宽度必须大于0');
-    if (!template.height || template.height <= 0) errors.push('模板高度必须大于0');
-
-    // 检查对象数据格式
-    try {
-      const templateData = this.parseTemplateData(template);
-      if (!templateData.objects || !Array.isArray(templateData.objects)) {
-        errors.push('模板对象数据格式无效');
-      }
-    } catch (error) {
-      errors.push(`模板数据解析失败: ${error instanceof Error ? error.message : '未知错误'}`);
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors
-    };
-  }
-
-  /**
-   * 预览模板（生成缩略图）
-   */
-  public async generateThumbnail(
-    template: Template,
-    options: {
-      width?: number;
-      height?: number;
-      quality?: number;
-    } = {}
-  ): Promise<string> {
-    const { width = 200, height = 300, quality = 0.8 } = options;
-
-    // 创建临时画布
-    const tempCanvas = new fabric.Canvas(document.createElement('canvas'), {
+    // 设置画布尺寸
+    canvas.setDimensions({
       width: template.width,
       height: template.height
     });
 
-    try {
-      // 应用模板到临时画布
-      await this.applyTemplate(tempCanvas, template, {
-        clearCanvas: true,
-        preserveCanvasSize: false
-      });
+    // 按顺序添加元素
+    for (const element of template.elements) {
+      const fabricObject = await this.createElement(element);
+      if (fabricObject) {
+        canvas.add(fabricObject);
+      }
+    }
 
-      // 生成缩略图
-      const thumbnail = tempCanvas.toDataURL({
-        format: 'png',
-        quality,
-        multiplier: Math.min(width / template.width, height / template.height)
-      });
+    // 渲染画布
+    canvas.renderAll();
+  }
 
-      return thumbnail;
-    } finally {
-      // 清理临时画布
-      tempCanvas.dispose();
+  // 创建Fabric.js对象
+  private static async createElement(element: TemplateElement): Promise<fabric.Object | null> {
+    switch (element.type) {
+      case 'background':
+        return this.createBackground(element);
+      case 'text':
+        return this.createText(element);
+      case 'shape':
+        return this.createShape(element);
+      case 'image':
+        return this.createImage(element);
+      default:
+        return null;
     }
   }
 
-  /**
-   * 从当前画布创建模板
-   */
-  public createTemplateFromCanvas(
-    canvas: fabric.Canvas,
-    templateInfo: {
-      name: string;
-      description: string;
-      category: string;
-      tags: string[];
-    }
-  ): Template {
-    const canvasData = canvas.toJSON();
-    const canvasSize = canvas.getCenter();
+  // 创建背景
+  private static createBackground(element: TemplateElement): fabric.Object {
+    if (element.gradient) {
+      // 创建渐变背景
+      const gradient = new fabric.Gradient({
+        type: element.gradient.type,
+        coords: element.gradient.type === 'linear' 
+          ? { x1: 0, y1: 0, x2: element.width || 0, y2: element.height || 0 }
+          : { x1: (element.width || 0) / 2, y1: (element.height || 0) / 2, r1: 0, r2: (element.width || 0) / 2 },
+        colorStops: element.gradient.colors.map((color, index) => ({
+          offset: index / (element.gradient!.colors.length - 1),
+          color: color
+        }))
+      });
 
-    const template: Template = {
-      id: `custom_${Date.now()}`,
-      name: templateInfo.name,
-      description: templateInfo.description,
-      category: templateInfo.category,
-      thumbnail: canvas.toDataURL({
-        format: 'png',
-        quality: 0.8,
-        multiplier: 0.3
-      }),
-      width: canvas.getWidth(),
-      height: canvas.getHeight(),
-      objects: {
-        type: 'canvas',
-        version: canvasData.version,
-        objects: canvasData.objects
-      },
-      tags: templateInfo.tags,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      isPublic: false,
-      author: '用户'
+      return new fabric.Rect({
+        left: element.left,
+        top: element.top,
+        width: element.width || 0,
+        height: element.height || 0,
+        fill: gradient,
+        selectable: false,
+        evented: false,
+        excludeFromExport: false
+      });
+    } else {
+      // 创建纯色背景
+      return new fabric.Rect({
+        left: element.left,
+        top: element.top,
+        width: element.width || 0,
+        height: element.height || 0,
+        fill: element.backgroundColor || '#ffffff',
+        selectable: false,
+        evented: false,
+        excludeFromExport: false
+      });
+    }
+  }
+
+  // 创建文本
+  private static createText(element: TemplateElement): fabric.IText {
+    return new fabric.IText(element.text || '', {
+      left: element.left,
+      top: element.top,
+      fontSize: element.fontSize || 16,
+      fontFamily: element.fontFamily || 'Arial',
+      fontWeight: element.fontWeight || 'normal',
+      fill: element.fill || '#000000',
+      textAlign: element.textAlign || 'left',
+      selectable: true,
+      editable: true
+    });
+  }
+
+  // 创建形状
+  private static createShape(element: TemplateElement): fabric.Object {
+    const commonProps = {
+      left: element.left,
+      top: element.top,
+      width: element.width || 100,
+      height: element.height || 100,
+      fill: element.backgroundColor || '#000000',
+      stroke: element.borderColor,
+      strokeWidth: element.borderWidth || 0,
+      selectable: true
     };
 
-    return template;
+    switch (element.shapeType) {
+      case 'circle':
+        return new fabric.Circle({
+          ...commonProps,
+          radius: (element.width || 100) / 2
+        });
+      case 'triangle':
+        return new fabric.Triangle(commonProps);
+      case 'rect':
+      default:
+        return new fabric.Rect(commonProps);
+    }
+  }
+
+  // 创建图片
+  private static async createImage(element: TemplateElement): Promise<fabric.Image | null> {
+    if (!element.src) return null;
+
+    return new Promise((resolve) => {
+      fabric.Image.fromURL(element.src!, (img) => {
+        img.set({
+          left: element.left,
+          top: element.top,
+          width: element.width,
+          height: element.height,
+          selectable: true
+        });
+        resolve(img);
+      });
+    });
+  }
+
+  // 预览模板（生成缩略图）
+  static generateThumbnail(template: DesignTemplate, size: number = 200): Promise<string> {
+    return new Promise((resolve) => {
+      // 创建临时画布
+      const tempCanvas = new fabric.Canvas(document.createElement('canvas'), {
+        width: size,
+        height: size
+      });
+
+      // 计算缩放比例
+      const scale = size / Math.max(template.width, template.height);
+      
+      // 应用模板（简化版）
+      this.applyTemplate(tempCanvas, template).then(() => {
+        // 缩放画布内容
+        tempCanvas.setZoom(scale);
+        
+        // 生成缩略图
+        const thumbnail = tempCanvas.toDataURL({
+          format: 'png',
+          quality: 0.8
+        });
+        
+        resolve(thumbnail);
+      });
+    });
+  }
+
+  // 获取模板颜色调色板
+  static getTemplatePalette(template: DesignTemplate): string[] {
+    return template.colors;
+  }
+
+  // 获取模板使用的字体
+  static getTemplateFonts(template: DesignTemplate): string[] {
+    return template.fonts;
+  }
+
+  // 自定义模板颜色
+  static customizeTemplateColors(template: DesignTemplate, colorMap: Record<string, string>): DesignTemplate {
+    const customizedTemplate = JSON.parse(JSON.stringify(template));
+    
+    // 替换元素中的颜色
+    customizedTemplate.elements.forEach((element: TemplateElement) => {
+      if (element.fill && colorMap[element.fill]) {
+        element.fill = colorMap[element.fill];
+      }
+      if (element.backgroundColor && colorMap[element.backgroundColor]) {
+        element.backgroundColor = colorMap[element.backgroundColor];
+      }
+      if (element.borderColor && colorMap[element.borderColor]) {
+        element.borderColor = colorMap[element.borderColor];
+      }
+      if (element.gradient) {
+        element.gradient.colors = element.gradient.colors.map(color => 
+          colorMap[color] || color
+        );
+      }
+    });
+
+    return customizedTemplate;
+  }
+
+  // 自定义模板文字
+  static customizeTemplateText(template: DesignTemplate, textMap: Record<string, string>): DesignTemplate {
+    const customizedTemplate = JSON.parse(JSON.stringify(template));
+    
+    // 替换文本内容
+    customizedTemplate.elements.forEach((element: TemplateElement) => {
+      if (element.type === 'text' && element.text && textMap[element.id]) {
+        element.text = textMap[element.id];
+      }
+    });
+
+    return customizedTemplate;
   }
 }
-
-// 导出单例实例
-export const templateService = TemplateService.getInstance();
