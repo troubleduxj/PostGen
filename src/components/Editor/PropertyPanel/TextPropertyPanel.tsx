@@ -41,6 +41,7 @@ const TextProperties: React.FC = () => {
     fontFamily: textObject.fontFamily || 'Arial',
     fontWeight: textObject.fontWeight || 'normal',
     fontStyle: textObject.fontStyle || 'normal',
+    underline: textObject.underline || false,
     textAlign: textObject.textAlign || 'left',
     fill: textObject.fill as string || '#000000',
     lineHeight: textObject.lineHeight || 1.2,
@@ -56,6 +57,7 @@ const TextProperties: React.FC = () => {
       fontFamily: textObject.fontFamily || 'Arial',
       fontWeight: textObject.fontWeight || 'normal',
       fontStyle: textObject.fontStyle || 'normal',
+      underline: textObject.underline || false,
       textAlign: textObject.textAlign || 'left',
       fill: textObject.fill as string || '#000000',
       lineHeight: textObject.lineHeight || 1.2,
@@ -81,9 +83,8 @@ const TextProperties: React.FC = () => {
   };
 
   const toggleUnderline = () => {
-    const currentDecoration = (textObject as any).textDecoration || '';
-    const newDecoration = currentDecoration.includes('underline') ? '' : 'underline';
-    handlePropertyChange('textDecoration', newDecoration);
+    const newUnderline = !textProperties.underline;
+    handlePropertyChange('underline', newUnderline);
   };
 
   const setTextAlign = (align: string) => {
@@ -180,7 +181,7 @@ const TextProperties: React.FC = () => {
               </button>
               <button
                 onClick={toggleUnderline}
-                className={`${propertyStyles.button} ${(textObject as any).textDecoration?.includes('underline') ? 'bg-blue-100 border-blue-300' : ''}`}
+                className={`${propertyStyles.button} ${textProperties.underline ? 'bg-blue-100 border-blue-300' : ''}`}
                 title="下划线"
               >
                 <Underline size={16} />

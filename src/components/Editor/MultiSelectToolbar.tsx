@@ -36,34 +36,34 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
         const activeSelection = canvas.getActiveObject();
         if (activeSelection && activeSelection.type === 'activeSelection') {
           const bounds = activeSelection.getBoundingRect();
-          
+
           // 获取画布元素和容器的位置信息
           const canvasElement = canvas.getElement();
           const canvasRect = canvasElement.getBoundingClientRect();
-          
+
           // 计算画布的缩放和偏移
           const zoom = canvas.getZoom();
           const vpt = canvas.viewportTransform;
           const canvasLeft = vpt ? vpt[4] : 0;
           const canvasTop = vpt ? vpt[5] : 0;
-          
+
           // 计算选中区域在屏幕上的实际位置
           const screenX = canvasRect.left + (bounds.left + canvasLeft) * zoom;
           const screenY = canvasRect.top + (bounds.top + canvasTop) * zoom;
           const screenWidth = bounds.width * zoom;
-          
+
           // 工具栏高度约为50px，确保在选中区域上方显示
           const toolbarHeight = 50;
           let toolbarY = screenY - toolbarHeight - 10;
-          
+
           // 如果工具栏会超出屏幕顶部，则显示在选中区域下方
           if (toolbarY < 10) {
             toolbarY = screenY + bounds.height * zoom + 10;
           }
-          
+
           // 确保工具栏在屏幕范围内
           const toolbarX = Math.max(150, Math.min(window.innerWidth - 150, screenX + screenWidth / 2));
-          
+
           setPosition({
             x: toolbarX,
             y: Math.max(10, Math.min(window.innerHeight - toolbarHeight - 10, toolbarY))
@@ -197,7 +197,7 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
 
     const firstPos = direction === 'horizontal' ? (firstObj.left || 0) : (firstObj.top || 0);
     const lastPos = direction === 'horizontal' ? (lastObj.left || 0) : (lastObj.top || 0);
-    const lastSize = direction === 'horizontal' 
+    const lastSize = direction === 'horizontal'
       ? ((lastObj.width || 0) * (lastObj.scaleX || 1))
       : ((lastObj.height || 0) * (lastObj.scaleY || 1));
 
@@ -205,7 +205,7 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
 
     // 计算所有对象的总尺寸
     const objectsSpace = sorted.reduce((sum, obj) => {
-      const size = direction === 'horizontal' 
+      const size = direction === 'horizontal'
         ? ((obj.width || 0) * (obj.scaleX || 1))
         : ((obj.height || 0) * (obj.scaleY || 1));
       return sum + size;
@@ -220,7 +220,7 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
     sorted.forEach((obj, index) => {
       if (index === 0) return; // 跳过第一个对象
 
-      const objSize = direction === 'horizontal' 
+      const objSize = direction === 'horizontal'
         ? ((obj.width || 0) * (obj.scaleX || 1))
         : ((obj.height || 0) * (obj.scaleY || 1));
 
@@ -319,11 +319,10 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
       {/* 分布按钮 */}
       <button
         onClick={() => handleDistribute('horizontal')}
-        className={`flex items-center justify-center w-8 h-8 rounded transition-colors ${
-          selectedObjects.length < 3 
-            ? 'text-gray-400 cursor-not-allowed' 
+        className={`flex items-center justify-center w-8 h-8 rounded transition-colors ${selectedObjects.length < 3
+            ? 'text-gray-400 cursor-not-allowed'
             : 'hover:bg-gray-100'
-        }`}
+          }`}
         title="水平分布"
         disabled={selectedObjects.length < 3}
       >
@@ -332,11 +331,10 @@ export const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({
 
       <button
         onClick={() => handleDistribute('vertical')}
-        className={`flex items-center justify-center w-8 h-8 rounded transition-colors ${
-          selectedObjects.length < 3 
-            ? 'text-gray-400 cursor-not-allowed' 
+        className={`flex items-center justify-center w-8 h-8 rounded transition-colors ${selectedObjects.length < 3
+            ? 'text-gray-400 cursor-not-allowed'
             : 'hover:bg-gray-100'
-        }`}
+          }`}
         title="垂直分布"
         disabled={selectedObjects.length < 3}
       >
