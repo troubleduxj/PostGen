@@ -248,7 +248,7 @@ export type Tool =
   | 'hand';
 
 // 面板类型
-export type PanelType = 'layers' | 'text' | 'images' | 'properties' | 'assets' | 'templates' | 'history';
+export type PanelType = 'layers' | 'text' | 'draw' | 'images' | 'properties' | 'assets' | 'templates' | 'history';
 
 // 编辑器状态
 export interface EditorState {

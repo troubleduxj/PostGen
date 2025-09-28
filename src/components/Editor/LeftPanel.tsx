@@ -9,7 +9,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Paintbrush
 } from 'lucide-react';
 import { fabric } from 'fabric';
 import { PanelType } from '@/types';
@@ -18,6 +19,7 @@ import { LayerPanel } from './LayerPanel';
 import { AssetPanel } from './AssetPanel';
 import { HistoryPanel } from './HistoryPanel';
 import { textCategories, getTextEffectsByCategory, TextEffect } from '@/data/textEffects';
+import { drawingCategories, getDrawingToolsByCategory, DrawingTool, createFabricObject } from '@/data/drawingTools';
 
 interface LeftPanelProps {
   className?: string;
@@ -32,6 +34,7 @@ interface PanelTab {
 const panelTabs: PanelTab[] = [
   { id: 'layers', icon: Layers, label: '图层' },
   { id: 'text', icon: Type, label: '文本' },
+  { id: 'draw', icon: Paintbrush, label: '绘制' },
   { id: 'images', icon: ImageIcon, label: '图片' },
   { id: 'assets', icon: Image, label: '素材' },
   { id: 'templates', icon: Layout, label: '模板' },
@@ -134,6 +137,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ className = '' }) => {
             <div className="panel-content scrollbar-thin">
               {activePanel === 'layers' && <LayerPanel />}
               {activePanel === 'text' && <TextPanel />}
+              {activePanel === 'draw' && <DrawPanel />}
               {activePanel === 'images' && <ImagesPanel />}
               {activePanel === 'assets' && <AssetPanel />}
               {activePanel === 'templates' && <TemplatesPanel />}
@@ -737,3 +741,249 @@ const TemplatesPanel: React.FC = () => {
   );
 };
 
+// 绘制面板
+const DrawPanel: React.FC = () => {
+  const { canvas } = useEditorStore();
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [selectedBrush, setSelectedBrush] = useState<DrawingTool | null>(null);
+
+  // 添加绘制对象到画布
+  const addDrawingObject = (tool: DrawingTool) => {
+    if (!canvas) {
+      console.warn('Canvas not available for drawing');
+      return;
+    }
+
+    try {
+      if (tool.config.type === 'brush') {
+        // 启用自由绘制模式
+        canvas.isDrawingMode = true;
+        canvas.freeDrawingBrush.width = tool.config.strokeWidth || 5;
+        canvas.freeDrawingBrush.color = tool.config.stroke || '#000000';
+        
+        // 根据画笔类型设置不同的绘制效果
+        switch (tool.config.brushType) {
+          case 'pencil':
+            canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+            break;
+          case 'pen':
+            canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+            canvas.freeDrawingBrush.width = tool.config.strokeWidth || 3;
+            break;
+          case 'marker':
+            canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+            canvas.freeDrawingBrush.width = tool.config.strokeWidth || 8;
+            break;
+          case 'brush':
+            canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+            canvas.freeDrawingBrush.width = tool.config.strokeWidth || 5;
+            break;
+          case 'spray':
+            if ((fabric as any).SprayBrush) {
+              canvas.freeDrawingBrush = new (fabric as any).SprayBrush(canvas);
+              canvas.freeDrawingBrush.width = tool.config.strokeWidth || 10;
+            }
+            break;
+          case 'chalk':
+            canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+            canvas.freeDrawingBrush.width = tool.config.strokeWidth || 6;
+            break;
+          case 'charcoal':
+            canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+            canvas.freeDrawingBrush.width = tool.config.strokeWidth || 4;
+            break;
+          case 'highlighter':
+            canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+            canvas.freeDrawingBrush.width = tool.config.strokeWidth || 12;
+            break;
+          default:
+            canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+        }
+        
+        canvas.freeDrawingBrush.color = tool.config.stroke || '#000000';
+        setSelectedBrush(tool);
+        console.log('Drawing mode enabled:', tool.name);
+      } else {
+        // 禁用绘制模式，添加形状或线条
+        canvas.isDrawingMode = false;
+        setSelectedBrush(null);
+        
+        const centerX = canvas.getWidth() / 2;
+        const centerY = canvas.getHeight() / 2;
+        
+        const fabricObject = createFabricObject(tool, centerX, centerY);
+        
+        if (fabricObject) {
+          canvas.add(fabricObject);
+          canvas.setActiveObject(fabricObject);
+          canvas.renderAll();
+          console.log('Drawing object added:', tool.name);
+        }
+      }
+    } catch (error) {
+      console.error('Error adding drawing object:', error);
+    }
+  };
+
+  // 停止绘制模式
+  const stopDrawingMode = () => {
+    if (canvas) {
+      canvas.isDrawingMode = false;
+      setSelectedBrush(null);
+      canvas.renderAll();
+    }
+  };
+
+  // 切换分类展开状态
+  const toggleCategory = (categoryId: string) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(categoryId)) {
+      newExpanded.delete(categoryId);
+    } else {
+      newExpanded.add(categoryId);
+    }
+    setExpandedCategories(newExpanded);
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* 绘制模式状态 */}
+      {selectedBrush && (
+        <div className="p-4 border-b border-gray-200 bg-blue-50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="text-lg">{selectedBrush.icon}</span>
+              <div>
+                <div className="text-sm font-medium text-blue-900">{selectedBrush.name}绘制中</div>
+                <div className="text-xs text-blue-600">在画布上拖拽进行绘制</div>
+              </div>
+            </div>
+            <button
+              onClick={stopDrawingMode}
+              className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            >
+              停止绘制
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 绘制工具分类 */}
+      <div className="flex-1 overflow-y-auto scrollbar-thin">
+        <div className="p-4">
+          <h4 className="text-sm font-medium text-gray-700 mb-3">绘制工具</h4>
+          <div className="space-y-2">
+            {drawingCategories.map((category) => {
+              const isExpanded = expandedCategories.has(category.id);
+              const tools = getDrawingToolsByCategory(category.id);
+              
+              return (
+                <div key={category.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                  {/* 分类标题 */}
+                  <button
+                    onClick={() => toggleCategory(category.id)}
+                    className="w-full px-3 py-2 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between text-left"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">{category.icon}</span>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{category.name}</div>
+                        <div className="text-xs text-gray-500">{category.description}</div>
+                      </div>
+                    </div>
+                    {isExpanded ? (
+                      <ChevronUp size={16} className="text-gray-400" />
+                    ) : (
+                      <ChevronDown size={16} className="text-gray-400" />
+                    )}
+                  </button>
+
+                  {/* 分类内容 */}
+                  {isExpanded && (
+                    <div className="p-3 bg-white">
+                      <div className="grid grid-cols-2 gap-2">
+                        {tools.map((tool) => (
+                          <button
+                            key={tool.id}
+                            onClick={() => addDrawingObject(tool)}
+                            className={`p-2 border border-gray-200 rounded hover:border-blue-300 hover:bg-blue-50 transition-colors text-center group ${
+                              selectedBrush?.id === tool.id ? 'border-blue-500 bg-blue-100' : ''
+                            }`}
+                          >
+                            <div className="text-lg mb-1">{tool.icon}</div>
+                            <div className="text-xs font-medium text-gray-900 truncate mb-1">
+                              {tool.name}
+                            </div>
+                            <div className="text-xs text-gray-500 group-hover:text-blue-600">
+                              {tool.description}
+                            </div>
+                            {tool.config.type === 'brush' && selectedBrush?.id === tool.id && (
+                              <div className="text-xs text-blue-600 mt-1 font-medium">
+                                绘制中...
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* 绘制设置 */}
+      {selectedBrush && (
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
+          <h5 className="text-sm font-medium text-gray-700 mb-2">绘制设置</h5>
+          <div className="space-y-2">
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">画笔大小</label>
+              <input
+                type="range"
+                min="1"
+                max="50"
+                value={selectedBrush.config.strokeWidth || 5}
+                onChange={(e) => {
+                  const width = Number(e.target.value);
+                  if (canvas && canvas.freeDrawingBrush) {
+                    canvas.freeDrawingBrush.width = width;
+                  }
+                  setSelectedBrush({
+                    ...selectedBrush,
+                    config: { ...selectedBrush.config, strokeWidth: width }
+                  });
+                }}
+                className="w-full"
+              />
+              <div className="text-xs text-gray-500 text-center">
+                {selectedBrush.config.strokeWidth || 5}px
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">颜色</label>
+              <input
+                type="color"
+                value={selectedBrush.config.stroke || '#000000'}
+                onChange={(e) => {
+                  const color = e.target.value;
+                  if (canvas && canvas.freeDrawingBrush) {
+                    canvas.freeDrawingBrush.color = color;
+                  }
+                  setSelectedBrush({
+                    ...selectedBrush,
+                    config: { ...selectedBrush.config, stroke: color }
+                  });
+                }}
+                className="w-full h-8 border border-gray-300 rounded cursor-pointer"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
