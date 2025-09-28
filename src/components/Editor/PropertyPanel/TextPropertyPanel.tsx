@@ -58,11 +58,10 @@ const TextProperties: React.FC = () => {
   // 同步对象属性到本地状态
   useEffect(() => {
     const currentFontFamily = textObject.fontFamily || 'Arial';
-    console.log('Syncing properties, current fontFamily:', currentFontFamily);
 
     setTextProperties({
       fontSize: textObject.fontSize || 16,
-      fontFamily: currentFontFamily, // 直接使用当前的fontFamily
+      fontFamily: currentFontFamily,
       fontWeight: textObject.fontWeight || 'normal',
       fontStyle: textObject.fontStyle || 'normal',
       underline: textObject.underline || false,
@@ -76,8 +75,6 @@ const TextProperties: React.FC = () => {
   }, [textObject]);
 
   const handlePropertyChange = (key: string, value: any) => {
-    console.log('Updating property:', key, 'to:', value);
-    
     // 更新本地状态
     setTextProperties(prev => ({ ...prev, [key]: value }));
     
@@ -93,11 +90,6 @@ const TextProperties: React.FC = () => {
     
     // 重新渲染画布
     textObject.canvas?.renderAll();
-    
-    // 验证更新
-    setTimeout(() => {
-      console.log(`Property ${key} updated to:`, textObject.get(key));
-    }, 100);
   };
 
   const toggleFontWeight = () => {
@@ -140,50 +132,25 @@ const TextProperties: React.FC = () => {
 
   // 处理字体变化
   const handleFontChange = async (fontName: string) => {
-    console.log('Changing font to:', fontName);
-    
     // 查找字体信息
     const fontInfo = ALL_FONTS.find(font => font.name === fontName);
-    console.log('Font info:', fontInfo);
 
-    if (fontInfo) {
+    if (fontInfo && fontInfo.source === 'google') {
       // 如果是Google字体，需要先加载
-      if (fontInfo.source === 'google') {
-        setFontLoading(fontName);
-        
-        try {
-          // 动态加载Google字体CSS
-          await loadGoogleFont(fontName);
-          console.log('Google font loaded:', fontName);
-        } catch (error) {
-          console.error('Failed to load Google font:', error);
-        } finally {
-          setFontLoading(null);
-        }
+      setFontLoading(fontName);
+      
+      try {
+        // 动态加载Google字体CSS
+        await loadGoogleFont(fontName);
+      } catch (error) {
+        console.error('Failed to load Google font:', error);
+      } finally {
+        setFontLoading(null);
       }
-
-      // 应用字体到Fabric.js对象
-      const fontFamily = fontName; // 直接使用字体名称
-      console.log('Applying font:', fontFamily);
-      
-      // 更新本地状态
-      setTextProperties(prev => ({ ...prev, fontFamily: fontName }));
-      
-      // 直接设置到Fabric.js对象
-      textObject.set('fontFamily', fontFamily);
-      textObject.canvas?.renderAll();
-      
-      // 强制重新渲染
-      setTimeout(() => {
-        textObject.canvas?.renderAll();
-      }, 100);
-      
-    } else {
-      console.log('Font not found in database, using directly:', fontName);
-      setTextProperties(prev => ({ ...prev, fontFamily: fontName }));
-      textObject.set('fontFamily', fontName);
-      textObject.canvas?.renderAll();
     }
+
+    // 应用字体到Fabric.js对象
+    handlePropertyChange('fontFamily', fontName);
   };
 
   // 加载Google字体
