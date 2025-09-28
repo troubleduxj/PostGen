@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Toolbar } from './Toolbar';
 import { LeftPanel } from './LeftPanel';
 import { Canvas } from './Canvas';
@@ -6,12 +6,18 @@ import { RightPanel } from './RightPanel';
 import { CanvasStatusBar } from './CanvasStatusBar';
 import { useEditorStore } from '@/stores/editorStore';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { fontInitializer } from '@/utils/fontInitializer';
 
 export const Editor: React.FC = () => {
   const { isLoading, error } = useEditorStore();
   
   // 启用键盘快捷键
   useKeyboardShortcuts();
+
+  // 初始化字体系统
+  useEffect(() => {
+    fontInitializer.initialize();
+  }, []);
 
   if (error) {
     return (

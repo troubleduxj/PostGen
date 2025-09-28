@@ -16,6 +16,9 @@ import {
 } from 'lucide-react';
 import { BasePropertyPanelFunc, usePropertyPanel, propertyStyles } from './BasePropertyPanel';
 import { HexColorPicker } from 'react-colorful';
+import { FontLibrary } from '../FontLibrary';
+import { fontLoaderService } from '@/services/fontLoader';
+import { ALL_FONTS } from '@/data/fonts';
 
 interface TextPropertyPanelProps {
   object: fabric.IText;
@@ -36,6 +39,8 @@ const TextProperties: React.FC = () => {
   const textObject = object as fabric.IText;
   
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showFontLibrary, setShowFontLibrary] = useState(false);
+  const [fontLoading, setFontLoading] = useState<string | null>(null);
   const [textProperties, setTextProperties] = useState({
     fontSize: textObject.fontSize || 16,
     fontFamily: textObject.fontFamily || 'Arial',
@@ -110,6 +115,37 @@ const TextProperties: React.FC = () => {
     handlePropertyChange('textIndent', newIndent);
   };
 
+  // 处理字体变化
+  const handleFontChange = async (fontFamily: string) => {
+    // 查找字体信息
+    const fontInfo = ALL_FONTS.find(font => 
+      font.name === fontFamily || font.family.includes(fontFamily)
+    );
+
+    if (fontInfo && fontInfo.source === 'google') {
+      // 如果是Google字体，需要先加载
+      if (!fontLoaderService.isFontLoaded(fontFamily)) {
+        setFontLoading(fontFamily);
+        try {
+          await fontLoaderService.loadFont(fontInfo);
+        } catch (error) {
+          console.error('Failed to load font:', error);
+        } finally {
+          setFontLoading(null);
+        }
+      }
+    }
+
+    // 应用字体
+    handlePropertyChange('fontFamily', fontFamily);
+  };
+
+  // 从字体库选择字体
+  const handleFontLibrarySelect = (fontFamily: string) => {
+    handleFontChange(fontFamily);
+    setShowFontLibrary(false);
+  };
+
   return (
     <div className="p-4 space-y-6">
       {/* 字体设置 */}
@@ -122,20 +158,81 @@ const TextProperties: React.FC = () => {
           {/* 字体族 */}
           <div>
             <label className="block text-xs text-gray-600 mb-1">字体</label>
-            <select
-              value={textProperties.fontFamily}
-              onChange={(e) => handlePropertyChange('fontFamily', e.target.value)}
-              className={propertyStyles.input}
-            >
-              <option value="Arial">Arial</option>
-              <option value="Helvetica">Helvetica</option>
-              <option value="Times New Roman">Times New Roman</option>
-              <option value="Georgia">Georgia</option>
-              <option value="Verdana">Verdana</option>
-              <option value="Courier New">Courier New</option>
-              <option value="Impact">Impact</option>
-              <option value="Comic Sans MS">Comic Sans MS</option>
-            </select>
+            <div className="space-y-2">
+              <select
+                value={textProperties.fontFamily}
+                onChange={(e) => handleFontChange(e.target.value)}
+                className={propertyStyles.input}
+              >
+                <optgroup label="系统字体">
+                  <option value="Arial">Arial</option>
+                  <option value="Helvetica">Helvetica</option>
+                  <option value="Times New Roman">Times New Roman</option>
+                  <option value="Georgia">Georgia</option>
+                  <option value="Verdana">Verdana</option>
+                  <option value="Courier New">Courier New</option>
+                </optgroup>
+                
+                <optgroup label="热门字体">
+                  <option value="Open Sans">Open Sans</option>
+                  <option value="Roboto">Roboto</option>
+                  <option value="Lato">Lato</option>
+                  <option value="Montserrat">Montserrat</option>
+                  <option value="Source Sans Pro">Source Sans Pro</option>
+                  <option value="Poppins">Poppins</option>
+                  <option value="Inter">Inter</option>
+                </optgroup>
+                
+                <optgroup label="衬线字体">
+                  <option value="Playfair Display">Playfair Display</option>
+                  <option value="Merriweather">Merriweather</option>
+                  <option value="Lora">Lora</option>
+                  <option value="Source Serif Pro">Source Serif Pro</option>
+                </optgroup>
+                
+                <optgroup label="展示字体">
+                  <option value="Oswald">Oswald</option>
+                  <option value="Bebas Neue">Bebas Neue</option>
+                  <option value="Anton">Anton</option>
+                  <option value="Righteous">Righteous</option>
+                </optgroup>
+                
+                <optgroup label="手写字体">
+                  <option value="Dancing Script">Dancing Script</option>
+                  <option value="Pacifico">Pacifico</option>
+                  <option value="Satisfy">Satisfy</option>
+                  <option value="Kalam">Kalam</option>
+                </optgroup>
+                
+                <optgroup label="等宽字体">
+                  <option value="Roboto Mono">Roboto Mono</option>
+                  <option value="Source Code Pro">Source Code Pro</option>
+                  <option value="Fira Code">Fira Code</option>
+                </optgroup>
+                
+                <optgroup label="中文字体">
+                  <option value="Noto Sans SC">思源黑体</option>
+                  <option value="Noto Serif SC">思源宋体</option>
+                  <option value="Microsoft YaHei">微软雅黑</option>
+                  <option value="PingFang SC">苹方</option>
+                </optgroup>
+              </select>
+              
+              <button
+                onClick={() => setShowFontLibrary(true)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 flex items-center justify-center gap-2"
+              >
+                <Type size={14} />
+                浏览更多字体
+              </button>
+              
+              {fontLoading && (
+                <div className="text-xs text-blue-600 flex items-center gap-1">
+                  <div className="w-3 h-3 border border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  正在加载 {fontLoading}...
+                </div>
+              )}
+            </div>
           </div>
 
           {/* 字体大小 */}
@@ -419,6 +516,13 @@ const TextProperties: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* 字体库弹窗 */}
+      <FontLibrary
+        isOpen={showFontLibrary}
+        onClose={() => setShowFontLibrary(false)}
+        onFontSelect={handleFontLibrarySelect}
+      />
     </div>
   );
 };
