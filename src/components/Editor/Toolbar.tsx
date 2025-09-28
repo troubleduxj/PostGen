@@ -8,6 +8,7 @@ import {
     FolderOpen,
     Grid3X3,
     History,
+    Monitor,
 } from 'lucide-react';
 import { useEditorStore } from '@/stores/editorStore';
 import { useAlignmentStore } from '@/stores/alignmentStore';
@@ -19,6 +20,7 @@ import { AlignmentSettings } from './AlignmentSettings';
 import { SimpleUndoRedoButtons } from './UndoRedoButtons';
 import { CanvasThemeSelector } from './CanvasThemeSelector';
 import { ProjectManager } from './ProjectManager';
+import { EnhancedCanvasSizeSelector } from './EnhancedCanvasSizeSelector';
 import { useProjectStore } from '@/stores/projectStore';
 
 interface ToolbarProps {
@@ -39,6 +41,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ className = '' }) => {
 
     const [showExportModal, setShowExportModal] = useState(false);
     const [showHelpModal, setShowHelpModal] = useState(false);
+    const [showCanvasSizeSelector, setShowCanvasSizeSelector] = useState(false);
     
     // 使用工具管理器 hooks
     const { activeTool, activateToolById, toolManager } = useToolManager();
@@ -190,6 +193,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({ className = '' }) => {
             {/* 视图控制 */}
             <div className="flex items-center gap-1">
                 <button
+                    onClick={() => setShowCanvasSizeSelector(true)}
+                    className="toolbar-btn"
+                    title="画布尺寸设置"
+                >
+                    <Monitor size={18} />
+                </button>
+                <button
                     onClick={toggleGrid}
                     className={`toolbar-btn ${grid.visible ? 'active' : ''}`}
                     title="显示/隐藏网格"
@@ -257,6 +267,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({ className = '' }) => {
             <HelpModal
                 isOpen={showHelpModal}
                 onClose={() => setShowHelpModal(false)}
+            />
+
+            {/* 画布尺寸选择器 */}
+            <EnhancedCanvasSizeSelector
+                isOpen={showCanvasSizeSelector}
+                onClose={() => setShowCanvasSizeSelector(false)}
             />
         </div>
     );

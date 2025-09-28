@@ -543,6 +543,404 @@ export const MOBILE_PRESETS: CanvasPreset[] = [
   }
 ];
 
+// 头像设计尺寸
+export const AVATAR_PRESETS: CanvasPreset[] = [
+  {
+    name: '微信头像',
+    width: 640,
+    height: 640,
+    ratio: '1:1',
+    icon: '👤',
+    category: 'avatar',
+    description: '微信个人头像标准尺寸'
+  },
+  {
+    name: 'QQ头像',
+    width: 640,
+    height: 640,
+    ratio: '1:1',
+    icon: '👤',
+    category: 'avatar',
+    description: 'QQ个人头像标准尺寸'
+  },
+  {
+    name: '抖音头像',
+    width: 720,
+    height: 720,
+    ratio: '1:1',
+    icon: '👤',
+    category: 'avatar',
+    description: '抖音个人头像'
+  },
+  {
+    name: '小红书头像',
+    width: 400,
+    height: 400,
+    ratio: '1:1',
+    icon: '👤',
+    category: 'avatar',
+    description: '小红书个人头像'
+  },
+  {
+    name: 'Instagram头像',
+    width: 320,
+    height: 320,
+    ratio: '1:1',
+    icon: '👤',
+    category: 'avatar',
+    description: 'Instagram个人头像'
+  },
+  {
+    name: 'Twitter头像',
+    width: 400,
+    height: 400,
+    ratio: '1:1',
+    icon: '👤',
+    category: 'avatar',
+    description: 'Twitter个人头像'
+  },
+  {
+    name: 'LinkedIn头像',
+    width: 400,
+    height: 400,
+    ratio: '1:1',
+    icon: '👤',
+    category: 'avatar',
+    description: 'LinkedIn专业头像'
+  },
+  {
+    name: '游戏头像',
+    width: 512,
+    height: 512,
+    ratio: '1:1',
+    icon: '🎮',
+    category: 'avatar',
+    description: '游戏平台头像'
+  },
+  {
+    name: '论坛头像',
+    width: 200,
+    height: 200,
+    ratio: '1:1',
+    icon: '💬',
+    category: 'avatar',
+    description: '论坛社区头像'
+  },
+  {
+    name: '高清头像',
+    width: 1024,
+    height: 1024,
+    ratio: '1:1',
+    icon: '✨',
+    category: 'avatar',
+    description: '高清头像，适用于多平台'
+  }
+];
+
+// 读书卡片尺寸
+export const READING_CARD_PRESETS: CanvasPreset[] = [
+  {
+    name: '读书笔记卡片',
+    width: 1080,
+    height: 1350,
+    ratio: '4:5',
+    icon: '📚',
+    category: 'reading',
+    description: '适合分享的读书笔记卡片'
+  },
+  {
+    name: '书摘卡片',
+    width: 1080,
+    height: 1080,
+    ratio: '1:1',
+    icon: '📖',
+    category: 'reading',
+    description: '正方形书摘分享卡片'
+  },
+  {
+    name: '读书清单',
+    width: 1080,
+    height: 1920,
+    ratio: '9:16',
+    icon: '📋',
+    category: 'reading',
+    description: '竖版读书清单卡片'
+  },
+  {
+    name: '书评卡片',
+    width: 1200,
+    height: 1500,
+    ratio: '4:5',
+    icon: '⭐',
+    category: 'reading',
+    description: '书评分享卡片'
+  },
+  {
+    name: '阅读进度',
+    width: 1080,
+    height: 1440,
+    ratio: '3:4',
+    icon: '📊',
+    category: 'reading',
+    description: '阅读进度展示卡片'
+  },
+  {
+    name: '读书挑战',
+    width: 1080,
+    height: 1620,
+    ratio: '2:3',
+    icon: '🏆',
+    category: 'reading',
+    description: '读书挑战打卡卡片'
+  },
+  {
+    name: '书单推荐',
+    width: 1080,
+    height: 1350,
+    ratio: '4:5',
+    icon: '💡',
+    category: 'reading',
+    description: '书单推荐卡片'
+  },
+  {
+    name: '读后感',
+    width: 1080,
+    height: 1440,
+    ratio: '3:4',
+    icon: '💭',
+    category: 'reading',
+    description: '读后感分享卡片'
+  }
+];
+
+// 学习教育类卡片
+export const EDUCATION_PRESETS: CanvasPreset[] = [
+  {
+    name: '知识卡片',
+    width: 1080,
+    height: 1080,
+    ratio: '1:1',
+    icon: '🧠',
+    category: 'education',
+    description: '知识点总结卡片'
+  },
+  {
+    name: '学习笔记',
+    width: 1080,
+    height: 1350,
+    ratio: '4:5',
+    icon: '📝',
+    category: 'education',
+    description: '学习笔记整理卡片'
+  },
+  {
+    name: '思维导图',
+    width: 1920,
+    height: 1080,
+    ratio: '16:9',
+    icon: '🗺️',
+    category: 'education',
+    description: '横版思维导图'
+  },
+  {
+    name: '课程封面',
+    width: 1280,
+    height: 720,
+    ratio: '16:9',
+    icon: '🎓',
+    category: 'education',
+    description: '在线课程封面'
+  },
+  {
+    name: '学习计划',
+    width: 1080,
+    height: 1440,
+    ratio: '3:4',
+    icon: '📅',
+    category: 'education',
+    description: '学习计划表'
+  },
+  {
+    name: '复习卡片',
+    width: 800,
+    height: 1200,
+    ratio: '2:3',
+    icon: '🔄',
+    category: 'education',
+    description: '复习记忆卡片'
+  },
+  {
+    name: '考试倒计时',
+    width: 1080,
+    height: 1080,
+    ratio: '1:1',
+    icon: '⏰',
+    category: 'education',
+    description: '考试倒计时卡片'
+  },
+  {
+    name: '成绩单',
+    width: 1200,
+    height: 1600,
+    ratio: '3:4',
+    icon: '📊',
+    category: 'education',
+    description: '成绩展示卡片'
+  }
+];
+
+// 生活记录类卡片
+export const LIFESTYLE_PRESETS: CanvasPreset[] = [
+  {
+    name: '日记卡片',
+    width: 1080,
+    height: 1350,
+    ratio: '4:5',
+    icon: '📔',
+    category: 'lifestyle',
+    description: '日常生活记录卡片'
+  },
+  {
+    name: '心情日记',
+    width: 1080,
+    height: 1080,
+    ratio: '1:1',
+    icon: '😊',
+    category: 'lifestyle',
+    description: '心情记录卡片'
+  },
+  {
+    name: '美食记录',
+    width: 1080,
+    height: 1350,
+    ratio: '4:5',
+    icon: '🍽️',
+    category: 'lifestyle',
+    description: '美食分享卡片'
+  },
+  {
+    name: '旅行日记',
+    width: 1080,
+    height: 1440,
+    ratio: '3:4',
+    icon: '✈️',
+    category: 'lifestyle',
+    description: '旅行记录卡片'
+  },
+  {
+    name: '健身打卡',
+    width: 1080,
+    height: 1080,
+    ratio: '1:1',
+    icon: '💪',
+    category: 'lifestyle',
+    description: '健身记录卡片'
+  },
+  {
+    name: '习惯养成',
+    width: 1080,
+    height: 1350,
+    ratio: '4:5',
+    icon: '✅',
+    category: 'lifestyle',
+    description: '习惯打卡卡片'
+  },
+  {
+    name: '目标规划',
+    width: 1080,
+    height: 1440,
+    ratio: '3:4',
+    icon: '🎯',
+    category: 'lifestyle',
+    description: '目标设定卡片'
+  },
+  {
+    name: '感恩日记',
+    width: 1080,
+    height: 1350,
+    ratio: '4:5',
+    icon: '🙏',
+    category: 'lifestyle',
+    description: '感恩记录卡片'
+  }
+];
+
+// 商业设计类
+export const BUSINESS_PRESETS: CanvasPreset[] = [
+  {
+    name: 'Logo设计',
+    width: 1000,
+    height: 1000,
+    ratio: '1:1',
+    icon: '🏷️',
+    category: 'business',
+    description: 'Logo标志设计'
+  },
+  {
+    name: '品牌卡片',
+    width: 1080,
+    height: 1080,
+    ratio: '1:1',
+    icon: '🎨',
+    category: 'business',
+    description: '品牌展示卡片'
+  },
+  {
+    name: '产品介绍',
+    width: 1080,
+    height: 1350,
+    ratio: '4:5',
+    icon: '📦',
+    category: 'business',
+    description: '产品介绍卡片'
+  },
+  {
+    name: '价格表',
+    width: 1080,
+    height: 1440,
+    ratio: '3:4',
+    icon: '💰',
+    category: 'business',
+    description: '价格表展示'
+  },
+  {
+    name: '团队介绍',
+    width: 1200,
+    height: 800,
+    ratio: '3:2',
+    icon: '👥',
+    category: 'business',
+    description: '团队成员介绍'
+  },
+  {
+    name: '公司简介',
+    width: 1920,
+    height: 1080,
+    ratio: '16:9',
+    icon: '🏢',
+    category: 'business',
+    description: '公司介绍展示'
+  },
+  {
+    name: '服务介绍',
+    width: 1080,
+    height: 1350,
+    ratio: '4:5',
+    icon: '🛠️',
+    category: 'business',
+    description: '服务项目介绍'
+  },
+  {
+    name: '招聘海报',
+    width: 1080,
+    height: 1440,
+    ratio: '3:4',
+    icon: '👔',
+    category: 'business',
+    description: '招聘信息海报'
+  }
+];
+
 // 自定义常用尺寸
 export const CUSTOM_PRESETS: CanvasPreset[] = [
   {
@@ -623,8 +1021,13 @@ export const CUSTOM_PRESETS: CanvasPreset[] = [
 export const ALL_CANVAS_PRESETS = {
   social: SOCIAL_MEDIA_PRESETS,
   mobile: MOBILE_PRESETS,
-  print: PRINT_PRESETS,
+  avatar: AVATAR_PRESETS,
+  reading: READING_CARD_PRESETS,
+  education: EDUCATION_PRESETS,
+  lifestyle: LIFESTYLE_PRESETS,
+  business: BUSINESS_PRESETS,
   poster: POSTER_PRESETS,
+  print: PRINT_PRESETS,
   digital: DIGITAL_PRESETS,
   custom: CUSTOM_PRESETS
 };
@@ -635,7 +1038,40 @@ export const PRESET_CATEGORIES = [
     key: 'social' as const,
     name: '社交媒体',
     icon: '📱',
-    description: '抖音、小红书、微信、Instagram等社交平台'
+    description: '抖音、小红书、微信、Instagram等社交平台',
+    popular: true
+  },
+  {
+    key: 'avatar' as const,
+    name: '头像设计',
+    icon: '👤',
+    description: '各平台个人头像设计尺寸',
+    popular: true
+  },
+  {
+    key: 'reading' as const,
+    name: '读书卡片',
+    icon: '📚',
+    description: '读书笔记、书摘、书评等精美卡片',
+    popular: true
+  },
+  {
+    key: 'education' as const,
+    name: '学习教育',
+    icon: '🎓',
+    description: '知识卡片、学习笔记、课程封面等'
+  },
+  {
+    key: 'lifestyle' as const,
+    name: '生活记录',
+    icon: '📔',
+    description: '日记、心情、美食、旅行等生活记录'
+  },
+  {
+    key: 'business' as const,
+    name: '商业设计',
+    icon: '💼',
+    description: 'Logo、品牌、产品介绍等商业用途'
   },
   {
     key: 'mobile' as const,

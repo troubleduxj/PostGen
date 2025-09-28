@@ -1,50 +1,17 @@
 import React, { useState } from 'react';
-import { Monitor, Smartphone, FileImage, Settings, Check } from 'lucide-react';
+import { Monitor, Smartphone, FileImage, Settings, Check, Maximize2 } from 'lucide-react';
+import { EnhancedCanvasSizeSelector } from './EnhancedCanvasSizeSelector';
+import { SOCIAL_MEDIA_PRESETS, AVATAR_PRESETS, READING_CARD_PRESETS } from '@/config/canvasPresets';
 
-// 常用画布尺寸预设
-export const CANVAS_PRESETS = {
-  // 社交媒体
-  social: [
-    { name: 'Instagram 正方形', width: 1080, height: 1080, ratio: '1:1', icon: '📷' },
-    { name: 'Instagram 故事', width: 1080, height: 1920, ratio: '9:16', icon: '📱' },
-    { name: 'Facebook 封面', width: 1200, height: 630, ratio: '1.91:1', icon: '📘' },
-    { name: 'Twitter 头图', width: 1500, height: 500, ratio: '3:1', icon: '🐦' },
-    { name: 'LinkedIn 横幅', width: 1584, height: 396, ratio: '4:1', icon: '💼' },
-  ],
-  
-  // 印刷品
-  print: [
-    { name: 'A4 纵向', width: 2480, height: 3508, ratio: 'A4', icon: '📄' },
-    { name: 'A4 横向', width: 3508, height: 2480, ratio: 'A4', icon: '📄' },
-    { name: 'A3 纵向', width: 3508, height: 4961, ratio: 'A3', icon: '📋' },
-    { name: 'A5 纵向', width: 1748, height: 2480, ratio: 'A5', icon: '📝' },
-    { name: '名片', width: 1050, height: 600, ratio: '1.75:1', icon: '💳' },
-  ],
-  
-  // 海报
-  poster: [
-    { name: '电影海报', width: 2025, height: 3000, ratio: '2:3', icon: '🎬' },
-    { name: '活动海报', width: 1800, height: 2400, ratio: '3:4', icon: '🎪' },
-    { name: '宣传单页', width: 2100, height: 2970, ratio: 'A4', icon: '📢' },
-    { name: '横幅广告', width: 3000, height: 1000, ratio: '3:1', icon: '🏷️' },
-  ],
-  
-  // 数字屏幕
-  digital: [
-    { name: '桌面壁纸 HD', width: 1920, height: 1080, ratio: '16:9', icon: '🖥️' },
-    { name: '桌面壁纸 4K', width: 3840, height: 2160, ratio: '16:9', icon: '🖥️' },
-    { name: '手机壁纸', width: 1080, height: 1920, ratio: '9:16', icon: '📱' },
-    { name: '平板壁纸', width: 2048, height: 2732, ratio: '3:4', icon: '📱' },
-  ],
-  
-  // 自定义常用尺寸
-  custom: [
-    { name: '正方形 小', width: 800, height: 800, ratio: '1:1', icon: '⬜' },
-    { name: '正方形 中', width: 1200, height: 1200, ratio: '1:1', icon: '⬜' },
-    { name: '横向 16:9', width: 1600, height: 900, ratio: '16:9', icon: '📺' },
-    { name: '纵向 9:16', width: 900, height: 1600, ratio: '9:16', icon: '📱' },
-  ]
-};
+// 快速预设（显示在下拉菜单中的常用尺寸）
+export const QUICK_PRESETS = [
+  // 最热门的社交媒体尺寸
+  ...SOCIAL_MEDIA_PRESETS.slice(0, 4),
+  // 头像设计
+  ...AVATAR_PRESETS.slice(0, 2),
+  // 读书卡片
+  ...READING_CARD_PRESETS.slice(0, 2),
+];
 
 interface CanvasSizeSelectorProps {
   currentWidth: number;
@@ -59,20 +26,12 @@ export const CanvasSizeSelector: React.FC<CanvasSizeSelectorProps> = ({
   onSizeChange,
   onClose
 }) => {
-  const [activeCategory, setActiveCategory] = useState<keyof typeof CANVAS_PRESETS>('social');
+  const [showEnhanced, setShowEnhanced] = useState(false);
+  const [showCustom, setShowCustom] = useState(false);
   const [customWidth, setCustomWidth] = useState(currentWidth.toString());
   const [customHeight, setCustomHeight] = useState(currentHeight.toString());
-  const [showCustom, setShowCustom] = useState(false);
 
-  const categories = [
-    { key: 'social' as const, name: '社交媒体', icon: Smartphone },
-    { key: 'print' as const, name: '印刷品', icon: FileImage },
-    { key: 'poster' as const, name: '海报', icon: Monitor },
-    { key: 'digital' as const, name: '数字屏幕', icon: Monitor },
-    { key: 'custom' as const, name: '常用尺寸', icon: Settings },
-  ];
-
-  const handlePresetSelect = (preset: typeof CANVAS_PRESETS.social[0]) => {
+  const handlePresetSelect = (preset: any) => {
     onSizeChange(preset.width, preset.height);
     onClose?.();
   };
@@ -92,99 +51,103 @@ export const CanvasSizeSelector: React.FC<CanvasSizeSelectorProps> = ({
   };
 
   return (
-    <div className="canvas-size-selector">
-      <div className="size-selector-header">
-        <h3 className="text-lg font-semibold text-gray-900">选择画布尺寸</h3>
-        <p className="text-sm text-gray-600 mt-1">
-          当前: {currentWidth} × {currentHeight} 像素
-        </p>
-      </div>
+    <>
+      <div className="canvas-size-selector">
+        <div className="size-selector-header">
+          <h3 className="text-lg font-semibold text-gray-900">选择画布尺寸</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            当前: {currentWidth} × {currentHeight} 像素
+          </p>
+        </div>
 
-      {/* 分类标签 */}
-      <div className="category-tabs">
-        {categories.map((category) => {
-          const Icon = category.icon;
-          return (
-            <button
-              key={category.key}
-              onClick={() => setActiveCategory(category.key)}
-              className={`category-tab ${activeCategory === category.key ? 'active' : ''}`}
-            >
-              <Icon size={16} />
-              <span>{category.name}</span>
-            </button>
-          );
-        })}
-      </div>
+        {/* 快速预设 */}
+        <div className="quick-presets mb-4">
+          <h4 className="text-sm font-medium text-gray-700 mb-2">快速选择</h4>
+          <div className="grid grid-cols-2 gap-2">
+            {QUICK_PRESETS.slice(0, 6).map((preset, index) => (
+              <button
+                key={index}
+                onClick={() => handlePresetSelect(preset)}
+                className={`preset-item p-3 border rounded-lg text-left hover:border-blue-300 transition-colors ${
+                  isCurrentSize(preset.width, preset.height) ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">{preset.icon}</span>
+                  <span className="font-medium text-sm">{preset.name}</span>
+                </div>
+                <div className="text-xs text-gray-500">
+                  {preset.width} × {preset.height}
+                </div>
+                {isCurrentSize(preset.width, preset.height) && (
+                  <Check size={14} className="text-blue-500 mt-1" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
 
-      {/* 尺寸预设列表 */}
-      <div className="presets-grid">
-        {CANVAS_PRESETS[activeCategory].map((preset, index) => (
-          <button
-            key={index}
-            onClick={() => handlePresetSelect(preset)}
-            className={`preset-item ${isCurrentSize(preset.width, preset.height) ? 'current' : ''}`}
-          >
-            <div className="preset-icon">{preset.icon}</div>
-            <div className="preset-info">
-              <div className="preset-name">{preset.name}</div>
-              <div className="preset-size">
-                {preset.width} × {preset.height}
-              </div>
-              <div className="preset-ratio">{preset.ratio}</div>
-            </div>
-            {isCurrentSize(preset.width, preset.height) && (
-              <Check size={16} className="preset-check" />
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* 自定义尺寸 */}
-      <div className="custom-size-section">
+        {/* 更多尺寸按钮 */}
         <button
-          onClick={() => setShowCustom(!showCustom)}
-          className="custom-toggle"
+          onClick={() => setShowEnhanced(true)}
+          className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-300 hover:text-blue-600 transition-colors flex items-center justify-center gap-2"
         >
-          <Settings size={16} />
-          自定义尺寸
+          <Maximize2 size={16} />
+          浏览更多尺寸预设
         </button>
 
-        {showCustom && (
-          <div className="custom-inputs">
-            <div className="input-group">
-              <label>宽度 (px)</label>
-              <input
-                type="number"
-                value={customWidth}
-                onChange={(e) => setCustomWidth(e.target.value)}
-                min="1"
-                max="10000"
-                className="size-input"
-              />
+        {/* 自定义尺寸 */}
+        <div className="custom-size-section mt-4">
+          <button
+            onClick={() => setShowCustom(!showCustom)}
+            className="w-full flex items-center gap-2 p-2 text-sm text-gray-600 hover:text-gray-800"
+          >
+            <Settings size={16} />
+            自定义尺寸
+          </button>
+
+          {showCustom && (
+            <div className="custom-inputs mt-3 p-3 bg-gray-50 rounded-lg">
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">宽度 (px)</label>
+                  <input
+                    type="number"
+                    value={customWidth}
+                    onChange={(e) => setCustomWidth(e.target.value)}
+                    min="1"
+                    max="10000"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">高度 (px)</label>
+                  <input
+                    type="number"
+                    value={customHeight}
+                    onChange={(e) => setCustomHeight(e.target.value)}
+                    min="1"
+                    max="10000"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={handleCustomSubmit}
+                className="w-full mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+              >
+                应用自定义尺寸
+              </button>
             </div>
-            <div className="input-group">
-              <label>高度 (px)</label>
-              <input
-                type="number"
-                value={customHeight}
-                onChange={(e) => setCustomHeight(e.target.value)}
-                min="1"
-                max="10000"
-                className="size-input"
-              />
-            </div>
-            <button
-              onClick={handleCustomSubmit}
-              className="apply-custom-btn"
-            >
-              应用自定义尺寸
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* 增强版尺寸选择器 */}
+      <EnhancedCanvasSizeSelector
+        isOpen={showEnhanced}
+        onClose={() => setShowEnhanced(false)}
+      />
+    </>
   );
 };
-
-export default CanvasSizeSelector;
