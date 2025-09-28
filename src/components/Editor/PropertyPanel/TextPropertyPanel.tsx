@@ -19,6 +19,7 @@ import { HexColorPicker } from 'react-colorful';
 import { FontLibrary } from '../FontLibrary';
 import { fontLoaderService } from '@/services/fontLoader';
 import { ALL_FONTS } from '@/data/fonts';
+import { FontTester } from '@/utils/fontTester';
 
 interface TextPropertyPanelProps {
   object: fabric.IText;
@@ -78,18 +79,18 @@ const TextProperties: React.FC = () => {
     // 更新本地状态
     setTextProperties(prev => ({ ...prev, [key]: value }));
     
-    // 直接更新Fabric.js对象
-    textObject.set(key, value);
+    // 使用updateProperty确保正确的更新流程
+    updateProperty(key, value);
     
     // 对于字体相关属性，需要特殊处理
     if (key === 'fontFamily' || key === 'fontSize' || key === 'fontWeight' || key === 'fontStyle') {
-      // 强制重新计算文本尺寸
-      textObject.initDimensions();
-      textObject.setCoords();
+      // 延迟执行，确保属性已经设置
+      setTimeout(() => {
+        textObject.initDimensions();
+        textObject.setCoords();
+        textObject.canvas?.renderAll();
+      }, 50);
     }
-    
-    // 重新渲染画布
-    textObject.canvas?.renderAll();
   };
 
   const toggleFontWeight = () => {
@@ -155,31 +156,10 @@ const TextProperties: React.FC = () => {
 
   // 加载Google字体
   const loadGoogleFont = async (fontName: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      // 检查是否已经加载
-      const existingLink = document.querySelector(`link[href*="${fontName.replace(/\s+/g, '+')}"]`);
-      if (existingLink) {
-        resolve();
-        return;
+    return FontTester.loadAndTestGoogleFont(fontName).then(success => {
+      if (!success) {
+        throw new Error(`Failed to load font: ${fontName}`);
       }
-
-      // 创建Google Fonts链接
-      const link = document.createElement('link');
-      link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}:wght@300;400;500;600;700&display=swap`;
-      link.rel = 'stylesheet';
-      
-      link.onload = () => {
-        console.log('Font CSS loaded:', fontName);
-        // 等待字体实际可用
-        setTimeout(() => resolve(), 500);
-      };
-      
-      link.onerror = () => {
-        console.error('Failed to load font CSS:', fontName);
-        reject(new Error(`Failed to load font: ${fontName}`));
-      };
-
-      document.head.appendChild(link);
     });
   };
 
